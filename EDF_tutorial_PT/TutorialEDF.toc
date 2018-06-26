@@ -1,0 +1,29 @@
+\select@language {brazil}
+\contentsline {chapter}{\numberline {1}Introdu\c c\~ao}{1}
+\contentsline {chapter}{\numberline {2}Gera\c c\~ao dos sinais cerebrais}{2}
+\contentsline {section}{\numberline {2.1}Um pouco de qu\IeC {\'\i }mica...}{2}
+\contentsline {section}{\numberline {2.2}... com um pouco de biologia}{3}
+\contentsline {subsection}{\numberline {2.2.1}Difus\~ao de \IeC {\'\i }ons atrav\'es das c\'elulas}{4}
+\contentsline {subsection}{\numberline {2.2.2}O neur\^onio}{4}
+\contentsline {section}{\numberline {2.3}Neurofisiologia}{4}
+\contentsline {subsection}{\numberline {2.3.1}Potencial el\'etrico nas c\'elulas}{4}
+\contentsline {subsection}{\numberline {2.3.2}O potencial de a\c c\~ao}{6}
+\contentsline {subsection}{\numberline {2.3.3}Sinapses: o pensamento em baixo n\IeC {\'\i }vel}{7}
+\contentsline {chapter}{\numberline {3}O sinal cerebral -- EEG}{8}
+\contentsline {section}{\numberline {3.1}Gera\c c\~ao do EEG}{8}
+\contentsline {section}{\numberline {3.2}Ritmos cerebrais}{9}
+\contentsline {section}{\numberline {3.3}Medi\c c\~ao e grava\c c\~ao do EEG}{10}
+\contentsline {subsection}{\numberline {3.3.1}Tipos de eletrodos e posicionamento}{11}
+\contentsline {subsection}{\numberline {3.3.2}Tratamento do sinal}{12}
+\contentsline {chapter}{\numberline {4}\textit {European Data Format} -- EDF}{14}
+\contentsline {section}{\numberline {4.1}Especifica\c c\~oes}{14}
+\contentsline {chapter}{\numberline {5}Manipulando arquivos EDF}{15}
+\contentsline {section}{\numberline {5.1}\textit {ViewEDF} - \textit {The BioSig Project}}{15}
+\contentsline {subsection}{\numberline {5.1.1}Instala\c c\~ao}{15}
+\contentsline {subsection}{\numberline {5.1.2}Leitura e exporta\c c\~ao dos dados}{16}
+\contentsline {section}{\numberline {5.2}\textit {SleepExplorer} - \textit {Statistic Module}}{17}
+\contentsline {subsection}{\numberline {5.2.1}Instala\c c\~ao}{18}
+\contentsline {subsection}{\numberline {5.2.2}Leitura e exporta\c c\~ao de hipnogramas}{18}
+\contentsline {chapter}{\numberline {6}Conclus\~ao}{20}
+\vspace {1ex}
+\contentsline {section}{Refer\^encias}{20}

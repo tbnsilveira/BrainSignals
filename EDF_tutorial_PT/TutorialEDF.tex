@@ -1,0 +1,481 @@
+\documentclass[twoside]{ufsmreport}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{verbatim}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[latin1]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{indentfirst}
+\usepackage{url}
+
+\status{}{12 de Janeiro de 2011}
+
+\begin{document}
+
+\title{Trabalhando com sinais cerebrais} % no formato EDF
+\subtitle{\textit{European Data Format}}
+\oneauthor{Tiago da Silveira \ Alice Kozakevicius \ Cesar Rodrigues}
+\institute{\defaultaffiliation}
+\newcommand{\professor}{ }
+\institute{\defaultaffiliation}
+\runningauthor{Tiago da Silveira}
+\oneauthor{Orientador: Alice Kozakevicius, Dra.}
+\oneauthor{Coorientador:Cesar Rodrigues, Dr.}
+%\correspondingauthor{Tiago da Silveira \ Alice Kozakevicius \ Cesar Rodrigues}
+\correspondingauthor{Tiago da Silveira}
+\telephone{ }
+\http{tiagodasilveira@gmail.com \\ http://www.ufsm.br}
+\UFSMreport{1}
+\author{Tiago da Silveira \\ Alice Kozakevicius \\ Cesar Rodrigues}
+\maketitle 
+
+\chapter{Introdução}
+A observação e interpretação de sinais biológicos remonta ao início da medicina. Entretanto, foi a partir do início do século XIX que passou-se a considerar alguns sinais de origem eletroquímica, na mesma época em que outras ciências começavam a ser desenvolvidas: o conceito de neurofisiologia foi estabelecido pelos médicos e pesquisadores Carlo Matteucci e Emil Du Bois-Reymond, pioneiros no estudo da bioeletricidade. 
+Mais tarde, em 1875, o inglês Richard Caton faria o primeiro registro de sinais elétricos provenientes da atividade cerebral \cite{1}. A seguir, o século XX foi marcado por grandes avanços da física, química, biologia, medicina e engenharia, possibilitando a compreensão desses sinais e o desenvolvimento de equipamentos para medí-los.
+
+No que tange aos sinais cerebrais, hoje existem diversos métodos de registro e análise. Eletroencefalogramas (EEG) são obtidos através de sistemas computadorizados, seja de forma invasiva ou não. Ainda, os sinais cerebrais podem ser mensurados através de magnetoencefalografia -- que ao invés de utilizar o campo elétrico, como no EEG, utiliza o campo magnético -- ou ainda com técnicas de ressonância magnética.
+
+Este tutorial foi desenvolvido no contexto do projeto de mestrado intitulado \textit{Spline Wavelets e Análise de Sinais Cerebrais}, cujo principal objetivo é identificar o período de sonolência através da análise wavelet dos sinais cerebrais. Por este motivo, a revisão teórica e os exemplos empregados abordarão somente sinais de EEGs relacionados aos eventos de sonolência. Contudo, o processo de geração de bioeletricidade é similar entre as demais células do sistema nervoso central, células musculares e cardíacas.
+
+O objetivo principal deste trabalho é, de forma prática, abordar a utilização do \textit{European Data Format} (EDF) na transmissão e armazenamento de sinais biomédicos gravados em multicanais, padrão utilizado mundialmente na gravação de sinais cerebrais e cardíacos. Novamente, a abordagem se dará no contexto estudado, embora seja facilmente estendida a outras aplicações.
+
+O autor agradece a colaboração do Professor Arnaldo Batista, da Universidade Nova de Lisboa, por ceder gentilmente os sinais que estão sendo utilizados no projeto e contribuir com os materiais e softwares utilizados. Da mesma forma, agradece  ao Conselho Nacional de Desenvolvimento Científico e Tecnológico -- CNPq, pelo suporte financeiro ao projeto.
+
+\chapter{Geração dos sinais cerebrais}
+Já é de senso comum a ideia de que nosso sistema nervoso funciona através de impulsos elétricos. É interessante, portanto, compreendermos como estes sinais são gerados e transmitidos em nosso organismo, de modo que possamos medí-los, análisá-los e processá-los.
+
+Para o entendimento deste processo, alguns breves conceitos de química serão revisados, uma vez que são estas reações que iniciam e sustentam toda a atividade celular. Após, alguns conceitos de biologia tornam-se necessários para a compreensão de como é gerada a bioeletricidade. É também abordada a estrutura de um neurônio, ator principal na geração de sinais cerebrais. Por fim, estes conceitos são inter-relacionados na descrição dos principais processos neurofisiológicos.
+
+\section{Um pouco de química...}
+Um modelo aceitável de estrutura atômica é aquele em que o átomo de um elemento é composto por um núcleo (prótons e nêutrons) circundado por elétrons organizados em camadas. A teoria do octeto, inspirada no fato de que somente os gases nobres encontram-se isolados na natureza, nos diz que um átomo sempre tenderá a completar a sua última camada de valência com 8 elétrons, de modo a garantir sua estabilidade assim como os gases nobres. 
+
+Uma vez que um átomo cedeu ou ganhou um elétron -- de forma a ter 8 elétrons em sua última camada -- ele torna-se um \textbf{íon}. Quando um íon possui carga elétrica resultante positiva, isto é, perdeu um elétron, é chamado \textbf{cátion}. Quando o contrário acontece, isto é, recebe um elétron e, tendo mais elétrons que prótons, possui carga negativa, é chamado \textbf{ânion}.
+
+A troca de elétrons entre dois ou mais átomos ocorre nas ligações químicas, que podem ser:
+\begin{itemize}
+	\item Iônica: ocorre a transferência de elétrons da última camada, formando íons;
+	\item Covalente: os elétrons da última camada são compartilhados;
+	\item Metálica: é utilizado o conceito de nuvens de elétrons, onde os elétrons do material metálico movimentam-se livremente entre os átomos.
+\end{itemize}
+
+Das ligações químicas citadas, a condução de eletricidade pode ocorrer facilmente em materiais de ligações metálicas, uma vez que possuem elétrons "livres", ou nos de ligações iônicas, quando estes estiverem diluídos ou em estado líquido.
+
+\begin{figure}
+	\begin{center}
+	%Figura 1 - Molecula NaCl
+	\includegraphics[scale=0.7]{Dados/3_solub1.jpg}
+   	\vspace{-12mm}
+   	\caption{\label{fig1} Molécula de $NaCl$ e sua polaridade. (Fonte: \textit{http://educacao.uol.com.br})}
+	%Figura 2 - Molecula da agua.
+   	\includegraphics[scale=0.7]{Dados/3_solub2.jpg}
+	\vspace{-12mm}
+	\caption{\label{fig2} Molécula de $H_2O$ e sua polaridade. (Fonte: \textit{http://educacao.uol.com.br})}
+	\vspace{-8mm}
+	\end{center}
+\end{figure}
+
+A condução de eletricidade em elementos de ligação iônica ocorre da seguinte forma: seja, por exemplo, a ligação iônica entre o sódio ($Na^+$) e o cloro ($Cl^-$), formando o cloreto de sódio (figura \ref{fig1}). Quando os cristais de sal são dissolvidos na água (figura \ref{fig2}), os átomos de cloro tendem a ser atraídos aos de hidrogênio H, e os de oxigênio O são atraídos aos de sódio Na. Assim, as moléculas de água acabam dissociando os íons devido a sua polaridade molecular. O processo é ilustrado nas figuras \ref{fig3} e \ref{fig4} e é denominado hidratação, quando o solvente for a água, ou solvatação para os demais casos. 
+
+Em uma solução, uma vez que o número de cátions e ânions é igual, a sua carga elétrica média é nula. Entretanto, em organismos vivos há uma distribuição desigual dos íons entre os espaços internos e externos da célula, gerando assim a \textbf{bioeletricidade}.
+
+\begin{figure}[!h]
+	\begin{center}
+	\begin{minipage}[b]{0.45\linewidth}
+   	\begin{center}
+	\includegraphics[scale=0.7]{Dados/3_solub3.jpg}
+   	\vspace{-3mm}
+   	\caption{\label{fig3} Início do processo de hidratação da molécula de $NaCl$. (Fonte: \textit{http://educacao.uol.com.br})}
+	\end{center}
+   	\end{minipage}
+   	\hfill		% define espaços entre as minipáginas.
+   	\begin{minipage}[b]{0.45\linewidth}
+   	\begin{center}
+   	\includegraphics[scale=0.7]{Dados/3_solub4.jpg}
+	\vspace{-7mm}
+	\caption{\label{fig4} Conclusão do processo de hidratação de uma molécula de $NaCl$ e dissolução dos íons. (Fonte: \textit{http://educacao.uol.com.br})}
+%	\vspace{-8mm}
+	\end{center}
+	\end{minipage}
+	\end{center}
+\end{figure}
+
+
+\section{... com um pouco de biologia}
+
+Nosso corpo é quase que em sua totalidade drenado por fluídos: diferentes composições de água, minerais e compostos orgânicos. Considerando-se as células de nosso organismo, define-se o espaço intracelular como aquele interno à membrana citoplasmática e o espaço extracelular como aquele externo à célula. Ambos espaços são fluídos que contém íons de minerais que sofreram hidratação, porém com diferentes concentrações de íons e diferentes componentes. A bioeletricidade ocorre nos seres vivos devido a esta distribuição desigual de íons entre os espaços extracelular e intracelular. 
+
+As células nervosas são capazes de processar informação devido à membrana celular, que através de poros permite o fluxo ou influxo de íons e substâncias nutritivas. Porém, como isto ocorre?
+
+\subsection{Difusão de íons através das células}
+
+A membrana citoplasmática é uma membrana semi-permeável, ou seja, possui pequenos poros em sua superfície que permite a passagem seletiva de determinados íons. Para cada tipo de íon existem canais específicos, sendo os mais comuns para os íons de sódio, cloro e potássio. A taxa de passagem é regulada pelo número e tamanho dos poros.
+
+Há ainda uma tendência natural em atingir-se um equilíbrio na difusão de íons entre os meios intra e extra celular. Isto ocorre devido a: (1) temperatura, a agitação térmica das moléculas acelera a difusão; (2) gradiente químico, íons tendem a mover-se do espaço de maior concentração para o de menor concentração; (3) gradiente elétrico, devido à atração ou repulsão das cargas iônicas, estes tendem a distribuir-se de modo a haver o equilíbrio elétrico.
+
+Dessa forma, a difusão iônica através dos canais das células pode se dar das seguintes maneiras:
+\begin{itemize}
+	\item Transporte ativo: os íons de sódio são transportados para o exterior da célula enquanto os íons de potássio são transportados para o seu interior através das \textit{bombas de sódio-potássio}, que nada mais são que proteínas localizadas na membrana celular e que utilizam energia metabólica (extraída da glicose) para funcionar. Seu funcionamento será detalhado adiante.
+	\item Transporte passivo: é a difusão dos íons através dos espaços celulares devido à temperatura, concentração química e ao gradiente elétrico.
+\end{itemize}
+
+\subsection{O neurônio}
+Além da composição básica de uma célula -- núcleo, membrana e citoplasma -- os neurônios, ou também as células nervosas, possuem algumas características próprias. Podem ser divididos em três partes principais: o corpo celular, o axônio e os terminais pré-sinápticos, conforme ilustrado na figura \ref{fig5}.
+
+O corpo celular contém o núcleo, as principais organelas citoplasmáticas e, externamente, inúmeros dendritos, que são ramificações às quais os outros neurônios conectam-se. O axônio é uma extensão do corpo celular cuja função principal é a transmissão do sinal nervoso. O axônio é revestido quase que em sua totalidade por mielina, funcionando como um isolante na condução do sinal e evitando interferências e garantindo a velocidade na transmissão. Na extremidade do axônio, encontra-se o terminal pré-sináptico, responsável por realizar a conexão -- denominada sinapse -- com os dendritos de outros neurônios. Na figura \ref{fig5} são mostrados vários neurônios conectados através de sinapses. É importante observar que nos dendritos de cada neurônio há inúmeros outros conectados, formando assim uma rede neural.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.6]{Dados/5_neuronio.jpg}
+   	\vspace{-2mm}
+   	\caption{\label{fig5} Esquema de um neurônio (Fonte: \textit{http://marciocandiani.site.med.br})}
+	\end{center}
+	\vspace{-8mm}
+\end{figure}
+
+\section{Neurofisiologia}
+% Carga elétrica nas células; O potencial de ação; Sinapses.
+Já conhecemos a estrutura de uma célula cerebral. No entanto, como o sinal é gerado dentro da célula e transmitido para a rede de neurônios? Estes tópicos serão discutidos nesta seção.
+
+\subsection{Potencial elétrico nas células}
+A membrana das células humanas possui uma diferença de potencial denominada \textit{polarização elétrica da membrana} e o interior da célula apresenta uma carga elétrica negativa em relação ao seu exterior, chamado \textit{potencial de repouso da membrana}.
+
+Este potencial surge devido às diferentes concentrações dos íons de sódio ($Na^+$), cloro ($Cl^-$) e potássio ($K^+$) nos espaços intra e extracelular. Em condições normais, há mais $Na^+$ e $Cl^-$ no exterior da célula e maior concentração de $K^+$ no interior da mesma.
+
+Como surgem e como são mantidas essas diferenças de concentração? Isto deve-se inicialmente ao equilíbrio químico e ao fato da membrana celular possuir uma permeabilidade diferente para cada tipo de íon -- dai ser declarada semi-permeável. No início, os íons atravessam a membrana seguindo o seu gradiente químico. Aos poucos, surge um gradiente elétrico, que passa a repelir estes íons. Este processo ocorre até que haja um \textit{equilíbrio eletroquímico}, isto é, existe uma diferença de concentração química equilibrada por uma diferença de potencial elétrico.
+
+O cientista alemão Walter Nernst formulou uma lei que expressa este equílibrio para um determinado íon: um potencial elétrico é associado a cada íon, proporcional ao logaritmo das concentrações de cada lado da membrana. O cientista David E. Goldman formulou uma equação para o potencial de equilíbrio de uma membrana, levando em consideração todos os íons permeáveis a ela. 
+
+Para os principais íons, tem-se os seguintes potenciais elétricos associados:
+\begin{itemize}
+	\item $Na^+ \rightarrow +55mV$ (maior concentração no espaço extracelular)
+	\item $K^+ \rightarrow -75mV$ (maior concentração no espaço intracelular)
+	\item $Cl^- \rightarrow +55mV$ (maior concentração no espaço extracelular)
+\end{itemize}
+
+Pela lei de Nernst-Goldman, considerando os demais íons e os ânions orgânicos, o potencial em repouso da membrana celular geralmente é de $-60mV$.
+
+Com o decorrer do tempo, estes potenciais elétrico e químico tenderiam a equilibrar-se. Entretanto, existem ânions orgânicos no interior da célula -- cujo gradiente químico é alto, porém com permeabilidade da membrana nula. Ainda, conforme mencionado anteriormente, há o transporte ativo de íons através das bombas de sódio-potássio.
+
+A bomba de sódio-potássio nada mais é que uma proteina específica localizada na membrana celular. Em cada ciclo, 3 íons de sódio são lançados para o exterior da célula -- junto com uma molécula de água, para evitar a estumefação da célula -- e 2 íons de potássio são transportados para o interior. Isto é realizado através de um complexo processo químico e consume uma molécula de ATP (adenosina tri-fosfática), molécula a qual o organismo armazena a energia proveniente da glicose.
+
+\subsection{O potencial de ação}
+Já sabemos como a bioeletricidade é gerada e como é mantido o potencial elétrico da membrana em repouso. No entanto, ainda não há nenhum sinal ou pensamento...
+
+Tomemos como exemplo uma pessoa tocando algum objeto. A fricção das fibras nervosas da pele com o objeto faz com que alguns canais de $Na^+$ se abram. Assim, os íons de sódio entram na célula alterando o potencial de repouso. Na figura \ref{fig6} são mostradas as diferentes variações do potencial elétrico da membrana durante um potencial de ação desencadeado. Em humanos, o potencial de ação compreende as amplitudes de $-60mV$ a $+10mV$ \cite{1}. As etapas indicadas na figura \ref{fig6} são descritas abaixo:
+\begin{enumerate}
+	\item Nem sempre é desencadeado um potencial de ação. Os íons $Na^+$ podem entrar na célula em quantidade que as bombas de sódio-potássio consigam equilibrar. Ainda, conforme veremos adiante, existem sinapses excitatórias e inibitórias, de modo que um potencial de ação será desencadeado apenas se for ultrapassado o limiar ou \textit{threshold}, em torno de $-55mV$. Uma vez que o limiar é atingido, o potencial de ação é iniciado e um impulso elétrico será transmitido inevitavelmente. A partir deste potencial, os canais de sódio são abertos devido à polarização e os íons $Na^+$ passam a entrar na célula, aumentando o potencial elétrico.
+	\vspace{-1.5mm}
+	\item Nesta etapa, também devido à despolarização, os canais de potássio são também abertos e permitem que os íons $K^+$ deixem o interior da célula, porém a passagem dos íons de potássio é muito mais lenta, o que evita a neutralização e possibilita a criação do potencial de ação.
+	\vspace{-1.5mm}
+	\item Após atingir o ápice da despolarização (de $+10mV$ a $+30mV$) os canais de sódio se fecham -- devido ao equilíbrio eletroquímico anteriormente discutido.
+	\vspace{-1.5mm}
+	\item Como os canais de potássio continuam abertos (são mais lentos para abrir e fechar), os íons $K^+$ continuam a deixar a célula. Esta passa então a sofrer uma repolarização.
+	\vspace{-1.5mm}
+	\item Neste estágio os canais de potássio começam a fechar-se e os canais de sódio voltam ao estado normal. Entretanto, ocorre a chamada \textit{hiperpolarização}, ultrapassando o valor do potencial de repouso a até $-90mV$. Isto é fundamental pois evita que o neurônio receba um novo estímulo enquanto processa o potencial de ação ou, ao menos, eleva o valor do limiar. 
+	\vspace{-1.5mm}
+	\item Com os canais em seu estado normal, as bombas de sódio-potássio passam a restabelecer o potencial de repouso da membrana.
+\end{enumerate}
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[width=10cm,height=5cm]{Dados/7_pot_acao_editado.jpg}
+   	\vspace{-3mm}
+   	\caption{\label{fig6} Variação do potencial elétrico da membrana durante a ocorrência de um potencial de ação. (Fonte: \textit{http://neurostudents.blogspot.com})}
+	\end{center}
+\end{figure}
+
+\subsection{Sinapses: o pensamento em baixo nível}
+Agora que já compreendemos como o sinal cerebral é gerado, é possível estudar como os neurônios processam as informações através das sinapses, isto é, conexões entre neurônios. Existem basicamente dois tipos de sinapses \cite{2}:
+\begin{itemize}
+	\item Sinapses elétricas: ocorrem através do estabelecimento de contato direto entre um dos dendritos com o corpo celular de outro neurônio. Nesta sinapse, os canais de ambas as células são acoplados e os íons trocados diretamente. É uma transmissão muito rápida e sincronizada, ocorrendo em células do músculo cardíaco líso e em células epiteliais.
+	\item Sinapses químicas: são as principais sinapses que ocorrem no sistema nervoso. O neurônio pré-sináptico libera neurotransmissores na fenda sináptica que por sua vez, gera um potencial de ação no neurônio pós-sináptico. Observando este processo detalhadamente: o potencial de ação é gerado no corpo celular e transmitido pelo axônio; ao chegar no terminal pré-sináptico, estimula a entrada dos íons $Ca^{2+}$ que causam a adesão das vesículas sinápticas aos locais de liberação; estas vesículas fundem-se com a membrana e liberam os neurotransmissores que se difundem na fenda sináptica. Os neurotransmissores ligam-se a proteínas receptores na membrana da célula pós-sináptica. Após este processo, o neurotransmissor é destruído por uma enzima ou reabsorvido na terminação pré-sináptica. Cada neurônio produz somente um tipo de neurotransmissor. O efeito destes no neurônio pós-sináptico caracteriza dois tipos de sinapses químicas:
+		\subitem Sinapses excitatórias -- EPSP: despolariza a membrana pós-sináptica, levando-a a um valor mais próximo do limiar elétrico para o potencial de ação.
+		\subitem Sinapses inibitórias -- IPSP: ao contrário da anterior, estes neurotransmissores causam uma hiperpolarização, geralmente através da abertura de canais de íons de cloreto ($Cl^-$) ou potássio. Torna-se mais difícil atingir o limiar elétrico.
+\end{itemize}
+
+Uma única célula nervosa normalmente tem centenas ou milhares de sinapses químicas excitatórias ou inibitórias que chegam as suas terminações. O que define se a célula pós-sináptica disparará ou não o potencial de ação será a combinação de todos os EPSP e IPSP.
+
+\chapter{O sinal cerebral -- EEG}
+No capítulo anterior foi abordado como a bioeletricidade é gerada em nossas células e como ocorre a transmissão e o processamento de um sinal entre os neurônios. Entretanto, temos bilhões de neurônios e a medição e inferência de uma única transmissão torna-se impossivel. 
+
+Neste capítulo, estudaremos o que é conhecido como sinal cerebral, obtido através de eletroencefalogramas (EEG), e quais informações sobre o funcionamento do cérebro e do organismo obtemos através dos ritmos cerebrais. Ainda, será abordado como o sinal cerebral é medido e gravado, de modo que possa ser então processado. 
+
+\section{Geração do EEG}
+Um sinal de EEG, comumento chamado de sinal cerebral -- embora este último seja mais abrangente e possa designar sinais obtidos por outras técnicas -- é a medida do potencial elétrico em uma região cerebral durante a excitação dos neurônios através das sinapses. A corrente elétrica produzida através das sinapses gera um campo elétrico que pode ser medido a partir de eletrodos dispostos no couro cabeludo. 
+
+A cabeça humana possui diferentes camadas, sendo as principais, mostradas na figura \ref{fig7}, o escalpo ou couro cabeludo, o crânio e o cérebro. O crânio -- densa camada óssea necessária à proteção do cérebro -- é a camada que apresenta maior resistividade elétrica e, portanto, atenua o sinal elétrico de modo que o potencial só é medido quando proveniente de um grande grupo de neurônios ativos. 
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=0.7]{Dados/8_escalpo.jpg}
+   	\vspace{-1mm}
+   	\caption{\label{fig7} As principais camadas cerebrais e suas respectivas resistividades e espessuras. (Fonte: adaptado de \cite{1})}
+	\end{center}
+	\vspace{-8mm}
+\end{figure}
+
+De acordo com \cite{1}, o estudo e a análise dos sinais de EEG permitem o diagnóstico e pesquisa, dentre outros, dos seguintes temas clínicos:
+\begin{itemize}
+	\item Monitoração do estado de alerta, coma e morte cerebral;
+	\item Monitoração da cognição através do ritmo alfa;
+	\item Controle da profundidade da anestesia;
+	\item Epilepsia e localização da origem das crises epilépticas;
+	\item Teste do efeito de psicoativos;
+	\item \textbf{Investigação da fisiologia do sono;}
+	\item \textbf{Investigação de distúrbios do sono;}
+	\item Investigação de distúrbios mentais.
+\end{itemize}
+
+Contudo, a medição do EEG não fornece uma boa resolução espacial. Ou seja, sabe-se que aquele potencial ocorre entre os dois eletrodos do canal, ou entre um eletrodo e a referência, porém não se sabe exatamente quais neurônios correspondem àquela atividade medida. Os EEGs são utilizados, então, por oferecer a informação dos ritmos cerebrais, assunto da próxima seção.
+
+\section{Ritmos cerebrais}
+As sinapses em nosso cérebro ocorrem de maneira sincronizada e ritmada, indicando determinadas atividades ou distúrbios de acordo com a frequência e amplitude do sinal gerado. Embora estas medidas sofram variação de indivíduo para indivíduo, as ondas cerebrais podem ser agrupadas de acordo com sua faixa de frequência, indicando alguma atividade cerebral específica. Os principais ritmos cerebrais e aqueles relacionados aos processos do sono são descritos abaixo:
+
+\begin{itemize}
+	\item Ritmo delta ($\delta$): faixa de \textbf{0.5 a 4Hz}. Está associado ao sono profundo e pode estar presente no estado de vigília (acordado). Devido à baixa frequência, é fácil de ser confundido com artefatos (sinais falsos provenientes de imperfeições no método ou aparelhagem).
+	\item Ritmo theta ($\theta$): faixa de \textbf{4 a 7.5Hz}. Estas ondas surgem na transição do estado consciente para o de sonolência. São também associados ao acesso de informações do inconsciente, bem como em processos de inspiração criativa e meditação profunda.
+	\item Ritmo alpha ($\alpha$): faixa de \textbf{8 a 13Hz}. Comumente são bem descritas como um sinal senoidal. São conhecidas por indicar um estado de consciência em que o indivíduo está acordado porém relaxado, isto é, sem nenhuma atenção ou concentração. Sua amplitude normalmente é abaixo de $50\mu V$.
+	\item Ritmo beta ($\beta$): faixa de \textbf{14 a 26Hz}. Indica o estado de um indivíduo acordado e com alguma atividade cerebral, tal como pensamento, concentração, foco em atividades e soluções de problemas. É encontrada em adultos normais. Um alto nível de ondas beta pode indicar o estado de pânico em humanos. A amplitude dessas ondas normalmente está abaixo de $30\mu V$.
+	\item Ritmo gamma ($\gamma$): faixa de frequências \textbf{acima de 30Hz}, também considerada de 30 a 45Hz. São ondas de amplitude baixíssima e geralmente estão associadas a distúrbios mentais.
+	\item Ritmo sigma ($\sigma$): são os denominados \textit{sleep spindles} e ocorrem na faixa de \textbf{11 a 15Hz}.
+	\item Ritmo phi ($\phi$): ondas de frequência \textbf{abaixo de 4Hz}, ocorrendo dentro de $2s$ após os olhos serem fechados.
+	\item Ritmo kappa ($\kappa$): ritmo relacionado ao movimento dos globos oculares, é considerado um artefato.
+\end{itemize}
+
+A identificação dos ritmos cerebrais não é trivial e geralmente é feita visualmente por especialistas. Na figura \ref{fig8} estão dispostos alguns dos ritmos cerebrais mais comuns, compreendendo desde as baixas ($\delta$) às altas ($\beta$) frequências.
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=0.6]{Dados/9_ritmo.jpg}
+   	\vspace{-1mm}
+   	\caption{\label{fig8} Quatro amostras dos principais ritmos cerebrais. (Fonte: adaptado de \cite{1})}
+	\end{center}
+	\vspace{-8mm}
+\end{figure}
+
+\section{Medição e gravação do EEG}
+Um aparelho de eletroencefalografia consiste basicamente em um conjunto de eletrodos, amplificadores e filtros para cada canal -- um canal é formado por um conjunto de dois eletrodos dispostos simetricamente ou por um eletrodo posicionado e outro eletrodo de referência -- e um sistema de aquisição de dados, mecânico ou digital, para registrar as informações.
+
+Atualmente, a grande maioria dos sistemas de EEG é digital, com interface para computadores possibilitando a análise e pesquisa dos dados medidos. Nestes casos, a conversão do sinal medido é realizada por conversores analógico-digitais (ADC) multicanais. Como a frequência de interesse raramente ultrapassa os $100Hz$, geralmente os EEGs são obtidos à taxa de $200Hz$, respeitando o critério de Nyquist de que a taxa de amostragem deve ser de duas vezes a frequência máxima do sinal. Quanto à quantização, por tratar-se de sinais destinados a diagnósticos, geralmente são utilizados 16 bits, exigindo assim uma grande capacidade de armazenamento de dados \cite{1}.
+
+Tomando como exemplo o EEG de um paciente em uma clínica de polissonografia, onde são registradas as 8 horas de sono utilizando-se um sistema de 64 eletrodos a uma taxa de 200Hz e 16 bits, serão necessários 0.7GB para a armazenagem dos dados. O padrão EDF, discutido no próximo capítulo, é utilizado para otimizar a armazenagem e transmissão destes dados, facilitando assim o seu processamento.
+
+\subsection{Tipos de eletrodos e posicionamento}
+As características dos eletrodos têm grande influência na qualidade do sinal mensurado. Entre os diversos tipos de eletrodos utilizados pelos sistemas de EEG, podemos citar:
+\begin{itemize}
+	\item Descartáveis, pré-preparados ou sem necessidade de gel-condutor;
+	\item Eletrodos de disco reutilizáveis, podendo ser de ouro, prata ou aço inoxidável;
+	\item Toucas ou malhas de eletrodos;
+	\item Eletrodos agulha, para medições mais precisas porém invasivas.	
+\end{itemize}
+
+Deve-se observar que a alta impedância entre o córtex e os eletrodos, bem como o uso de eletrodos de alta impedância, podem levar a distorções no sinal. Durante a disposição dos mesmos, a impedância de cada eletrodo deve ser menor que $5k\Omega$ e deve ser de $1k\Omega$ entre eles \cite{1}.
+
+Embora a estrutura do cérebro seja em camadas e de modo não uniforme, dificultando a localização da fonte do sinal de EEG, o conhecimento das posições dos eletrodos é fundamental nas atividades de diagnóstico e pesquisa, uma vez que para aplicações \textit{brain-machine interface} apenas um canal pode ser utilizado, devendo este ser bem determinado.
+
+Quanto ao posicionamento, um esquema bastante utilizado e recomendado pela Federação Internacional das Sociedades de EEG e Neurofisiologia Clínica está disposto na figura \ref{fig9}, utilizando 21 eletrodos, denominado "posicionamento 10-20". Neste esquema, os eletrodos de referência A1 e A2 são posicionados nos lóbulos das orelhas esquerda e direita, respectivamente.
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=0.9]{Dados/10_eletrodos1.jpg}
+   	\vspace{-5mm}
+   	\caption{\label{fig9} Diagrama do posicionamento 10-20 de eletrodos para EEG \cite{1}}
+	\end{center}
+	\vspace{-3mm}
+\end{figure}
+
+O esquema recebe a nomenclatura 10-20 por posicionar os eletrodos às equidistâncias de 10\% ou 20\% em relação aos pontos de referência. Estes pontos são os lóbulos de cada orelha e as posições \textit{nasion} e \textit{inion} estão referenciadas na figura \ref{fig10}, agora para um posicionamento de 75 eletrodos.
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=0.9]{Dados/11_eletrodos2.jpg}
+   	\vspace{-1mm}
+   	\caption{\label{fig10} Diagrama do esquema 10-20 para posicionamento de eletrodos, incluindo os eletrodos de referência. Em (a) e (b), visão tridimensional para posicionamento de 21 eletrodos. Em (c), visão bidimensional do posicionamento de 75 eletrodos. \cite{1}}
+	\end{center}
+	\vspace{-3mm}
+\end{figure}
+
+Para a gravação dos sinais, pode ser utilizado o método diferencial, onde é amplificada a diferença de potencial entre dois eletrodos simétricos; ou o método referencial, utilizando os eletrodos posicionados nos lóbulos como referência. Atualmente, são também utilizados referências diversas como a palma das mãos, nariz ou orelhas.
+
+
+
+
+\subsection{Tratamento do sinal}
+Antes do sinal medido ser convertido pelo ADC, é necessário que ele seja primeiramente amplificado e filtrado, embora alguns equipamentos façam a filtragem após a conversão. Na filtragem, são removidas as componentes menores de $0.5Hz$, de modo a retirar o ruído causado pela respiração, por exemplo. Ainda, muitas vezes aplica-se filtros passa-baixa com frequência de corte em $50Hz$, de modo a eliminar o ruído causado pela rede elétrica de 50Hz ou 60Hz. 
+
+Os demais artefatos podem ter causas fisiológicas, isto é, relacionadas ao paciente, tal como o piscar de olhos, contração muscular e movimentos que possam deslocar os eletrodos; ou causas técnicas, também chamados artefatos de sistema, tal como interferências, flutuação de impedância, defeitos no equipamento, entre outros \cite{1}. Estes artefatos geralmente são considerados no processamento do sinal, sendo o método de filtragem dependente da aplicação. 
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=1]{Dados/12_artefato.jpg}
+   	\vspace{-1mm}
+   	\caption{\label{fig11} Impacto do artefato causado pelo piscar dos olhos, no intervalo entre as amostras 800 a 1200, em sinais de EEG. (Fonte: adaptado de \cite{1})}
+	\end{center}
+	\vspace{-3mm}
+\end{figure}
+
+Na figura \ref{fig11} pode-se observar o artefato gerado pelo piscar dos olhos entre as amostras 800 e 1200 do sinal de EEG. Observa-se também que o impacto do artefato varia de acordo com o canal, isto é, com a posição dos eletrodos. Alguns artefatos, tais como os causados por movimentações dos eletrodos, são identificáveis por gerar grandes amplitudes e representarem segmentos contínuos. 
+
+De modo a possibilitar a interpretação visual, os sinais de EEG geralmente são divididos em épocas, correspondendo a segmentos de 20 a 30 segundos. Durante a análise visual, os especialistas costumam substituir a época em que encontra-se o artefato pela época anterior. 
+
+Os hipnogramas -- diagramas representando os diferentes estágios do sono de um paciente -- são elaborados atribuindo-se um estágio para cada época. Estes estágios são classificados pela \textit{American Academy of Sleep Medicine} como sendo: \textbf{W}, acordado; \textbf{N1}, estágio NREM-1; \textbf{N2}, estágio NREM-2; \textbf{N3}, estágio NREM-3; e \textbf{REM}, simbolizando o estágio de mesmo nome. Em algumas classificações antigas é encontrado ainda o estágio \textbf{N4}, hoje considerado também como \textbf{N3}.
+
+\chapter{\textit{European Data Format} -- EDF}
+O EDF, formato europeu de dados, em tradução livre, é um padrão de formato de arquivos simples e flexível, proposto em 1992, destinado à transmissão e armazenagem de sinais biológicos. Não há restrições quanto às dimensões físicas e à frequência de amostragem do sinal envolvido, de modo que este padrão de arquivos é utilizado extensamente em equipamentos e softwares para EEG e polissonografia.
+
+Um novo padrão, denominado EDF+ e compatível com o anterior, permite a gravação de sequências de dados com interrupções e anotações textuais. É utilizado para a gravação de sinais de EEG juntamente com eletrocardiogramas, potenciais evocados, entre outros sinais biofisicos.
+
+\section{Especificações}
+Um arquivo EDF possui a seguinte estrutura: um cabeçalho, de tamanho variável, onde são especificados os dados do paciente e as características técnicas do sinal; e uma seção de dados, cujos valores são dispostos de modo consecutivo de acordo com a duração pré-estipulada para cada época do sinal.
+
+Os primeiros 256 bytes do cabeçalho indicam a versão do formato, a identificação do paciente e do sinal, duração do sinal, o número de registros e o número de sinais ($ns$) em cada registro. Para cada sinal utilizado são designados mais 256 bytes para a especificação do tipo de sinal (EEG, ECG, temperatura), a amplitude de calibração e o número de amostras em cada registro, informação esta também utilizada para o cálculo da taxa de amostragem. O tamanho final do cabeçalho, em bytes, é dado pela relação $256 + (ns*256)$. Após o cabeçalho, são dispostos os dados cujo tamanho está relacionado ao número de amostras e ao número de sinais.
+
+No \textit{website} do grupo mantenedor do projeto \cite{4} são encontradas as especificações completas para os padrões EDF (1992) e EDF+ (2003). No mesmo sítio são dadas algumas diretrizes e orientações para o desenvolvimento de softwares utilizando o padrão EDF. Ainda no mesmo local, são disponibilizados os \textit{links} de acesso a diversos softwares e bibliotecas para manipulação destes arquivos.
+
+\chapter{Manipulando arquivos EDF}
+A manipulação de arquivos EDF geralmente é realizada através de software proprietário adquirido juntamente com o equipamento de EEG. Assim, há uma grande dependência entre o software e o equipamento utilizados e a forma como os dados são gravados e disponibilizados. Ou seja, cada base de dados em EDF possui características próprias tais como a duração de cada época e a inclusão ou não do hipnograma.
+
+Para as bases de dados cujo hipnograma é fornecido separadamente em arquivo texto ou de imagem, é utilizada para visualização e extração dos dados a ferramenta \textit{ViewEDF}, componente da toolbox \textit{BioSig} para o Matlab. Já para as bases de dados que possuem o hipnograma em EDF -- tal como a \textit{The Sleep-EDF Database}, disponibilizada na Internet \cite{5} -- este deve ser visualizado através do aplicativo \textit{SleepExplorer - Statistic Module}, enquanto a visualização do sinal também é efetuada pelo \textit{ViewEDF}.
+
+Nas seções a seguir serão detalhados os processos de instalação e utilização dos aplicativos mencionados. Contudo, há diversos outros softwares e bibliotecas que podem ser utilizados, de acordo com a preferência do usuário.
+
+\section{\textit{ViewEDF} - \textit{The BioSig Project}}
+O \textit{ViewEDF} é uma ferramenta pertencente à toolbox BioSig desenvolvida para Matlab e que permite a visualização de qualquer sinal no formato EDF, em diferentes aplicações. Na página do projeto na Internet \cite{6} é disponibilizado o download da toolbox e de outros softwares relacionados, bem como o acesso à documentação. O software é distribuído sob a licença \textit{General Public License} -- GNU, e atualizado regularmente.
+
+\subsection{Instalação}
+Neste tutorial, foram utilizadas as versões \textit{BioSig 2.51} e \textit{Matlab R2008a} no ambiente Windows. Para a instalação da ferramenta, os seguintes passos devem ser seguidos:
+\begin{enumerate}
+	\item Acessar a página \textit{http://biosig.sourceforge.net/download.html} para download dos arquivos de instalação e selecionar a última versão de \textbf{\textit{BioSig for Octave and Matlab}} na coluna \textbf{\textit{Win32(binary)}};
+	\item Após o download, descompactar todos os arquivos em alguma pasta de trabalho;
+	\item Através do Matlab, acessar a pasta onde os arquivos do BioSig foram descompactados;
+	\item Na janela de comandos do Matlab, dar o comando \textit{"biosig\_installer"};
+	\item Será perguntado \textit{"Would you like mex to locate installed compilers?"}. Digitar "n";
+	\item Será solicitado a escolha de um compilador. Digitar "0";
+	\item Para que a toolbox seja carregada automaticamente ao iniciar-se o Matlab, executar o comando "\textit{savepath}";
+	\subitem Em caso de erro, verifique as permissões de acesso do arquivo "pathdef.m" na pasta onde está instalado o Matlab. Dê permissão de gravação a todos os usuários.
+	\item Para utilizar o aplicativo, digite "\textit{viewedf}" na janela de comandos do Matlab.
+\end{enumerate}
+
+\subsection{Leitura e exportação dos dados}
+Um EEG pode ser facilmente visualizado através do \textit{ViewEDF}. Após a chamada do programa, selecione o menu "File" e após "Open EDF". Selecione o arquivo desejado e clique em "Open". Caso esteja-se trabalhando com vários sinais, é aconselhável definir o "Current Directory" do Matlab como sendo a pasta onde estão gravados os sinais antes de iniciar o \textit{ViewEDF}, uma vez que esta é a pasta padrão na procura dos arquivos.
+
+O \textit{ViewEDF} permite que vários arquivos sejam abertos e manipulados ao mesmo tempo. É aconselhável, portanto, o encerramento de um arquivo antes da abertura do próximo. Para isto, acesse o menu "File", "Close EDF" e selecione na lista exibida o arquivo a ser encerrado.
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=0.8]{Dados/viewedf_02.jpg}
+   	\vspace{-1mm}
+   	\caption{\label{fig12} Tela da ferramenta \textit{ViewEDF} exibindo diferentes sinais contidos em um arquivo EDF.}
+	\end{center}
+	\vspace{-3mm}
+\end{figure}
+
+Na figura \ref{fig12} é mostrada a tela do aplicativo após a abertura de um arquivo EDF. A identificação de cada sinal é mostrada à direita. Abaixo da identificação, os botões permitem controlar o modo como o sinal é exibido: "?" mostra informações detalhadas do sinal, tal como o número de amostras por registros; os botões "+" e "-" aumentam ou diminuem o detalhamento do valor do sinal, mantendo a exibição do mesmo número de amostras.
+
+O menu "Display", mostrado na figura \ref{fig12}, possui importantes recursos para a visualização do sinal:
+\begin{itemize}
+	\item "File Info": exibe detalhes acerca do arquivo EDF;
+	\item "Goto Record": posiciona o sinal a partir de um determinado registro;
+	\item "Goto Second": posiciona o sinal em um determinado tempo;
+	\item "Records on Screen": define o número de registros exibidos na tela. Deve ser definido adequadamente para a exportação dos dados;
+	\item "Channels": uma vez que um único arquivo EDF pode conter vários sinais, também chamados canais ou derivações, esta opção permite selecionar apenas os canais de interesse.
+\end{itemize} 
+
+A duração de cada registro, em segundos, está relacionada com a frequência de amostragem e a duração do sinal. Há várias formas de calculá-la: (1) através da opção "Records on Screen" definir que apenas um registro seja exibido, assim a duração de cada registro é exibida no campo "Displayed:", logo abaixo à barra de menus; (2) dividir a duração total do sinal, mostrada em "Total length", abaixo da barra de menus, pelo número total de registros, obtido em "File Info". Com estas mesmas informações consegue-se calcular a taxa de amostragem do sinal, caso esta não tenha sido informada.
+
+Para exportar o sinal para o Matlab, utiliza-se a opção "Assign Matrix" através do menu "File". É exibida uma caixa de diálogo solicitando um nome para a matriz que será criada no ambiente do Matlab. Deve-se observar que serão exportados apenas as porções dos sinais que estão sendo exibidas na tela. 
+
+Os dados são exportados para uma matriz celular, isto é, uma matriz onde cada elemento (célula) é uma outra matriz. Caso não haja familiariadade com este tipo de estrutura, recomenda-se a exportação de um único sinal. Abaixo, segue uma sequência de comandos utilizadas para exportar um sinal e para  gerar o gráfico do mesmo no Matlab:
+\begin{enumerate}
+	\item (ViewEDF) Abrir o sinal EEG, selecionar um único canal e definir o número de registros na tela;
+	\item (ViewEDF) Acessar o menu "File", "Assign Matrix", escolher o nome Sinal01;
+	\item (Matlab) Sinal02 = Sinal01\{1,1\}; \textit{Aqui, observa-se o uso de chaves para indexar células e parêntesis para indexar elementos}
+	\item (Matlab) plot(Sinal02);
+\end{enumerate}
+
+Após exportado para o Matlab, os dados podem ser então processados ou exportados para outro padrão de arquivos.
+	
+\section{\textit{SleepExplorer} - \textit{Statistic Module}}
+O \textit{SleepExplorer} é um aplicativo freeware para leitura e manipulação de sinais cerebrais. Entretanto, não é compatível com o Windows 7 e os dados não são bem visualizados no Windows XP ou em computadores com poucos recursos gráficos (leia-se notebooks, onde a resolução máxima é de 1280x800 pixels). Entretanto, desempenha bem a função de visualização do hipnograma, que é o propósito de sua utilização neste tutorial.
+
+\subsection{Instalação}
+Para a utilização do \textit{Statistic Module}, é necessário instalar primeiramente o aplicativo \textit{SleepExplorer}, cuja versão 1.0 foi descontinuada em 2004. Os seguintes passos devem ser seguidos:
+\begin{enumerate}
+	\item Acessar a página \textit{http://www.el-raton.de/} e clicar em \textit{SleepExplorer}. No final da página seguinte, efetuar o download dos arquivos de instalação clicando nos links "\textit{SleepExplorer 1.0.0}" e após no "\textit{Statistic module}".
+	%Instalação do SleepExplorer
+	\item Descompactar todos os arquivos de "Setup\_SleepExplorer.zip".
+	\item A instalação é simples: executar o arquivo "setup.exe" na pasta que foi descompactada e clicar em todas as opções "next", preservando a configuração padrão;
+	\subitem Caso haja dificuldade em relação à versão do Windows, sugere-se a utilização de máquinas virtuais.
+	\item O SleepExplorer é instalado e um atalho é criado na área de trabalho.
+	%Instalação do Statistic Module
+	\item Para a instalação do \textit{Statistic Module}, descompacte todos os arquivos de "Setup\_SE\_Statistics.zip" para alguma pasta.
+	\item Novamente, execute o arquivo "setup.exe" encontrado na pasta em que foram descompactados os arquivos. Prossiga a instalação clicando em todas as opções "next".
+	\item Ao ser finalizada a instalação, um atalho para o "Sleep Explorer Statistics" é criado na área de trabalho.
+\end{enumerate}
+
+\subsection{Leitura e exportação de hipnogramas}
+Para proceder a leitura de um hipnograma (geralmente possuem a extensão de arquivo ".h" ou ".hyp", no formato EDF), executa-se o aplicativo \textit{SleepExplorer - Statistics} cuja tela inicial apresentada é mostrada na figura \ref{fig13}. Deve ser acessado o menu "File", "Open EDF scoring file *.H?", indicando a localização do arquivo.
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=0.6]{Dados/sleepexplorer01.jpg}
+   	\vspace{-1mm}
+   	\caption{\label{fig13} Tela inicial do aplicativo \textit{SleepExplorer Statistics} para a visualização de hipnogramas no formato EDF.}
+	\end{center}
+	\vspace{-3mm}
+\end{figure}
+
+Após, é exibida uma caixa de diálogo com a mensagem "Saving converted scoring as View\_Rate file (*.WR1)", confirme clicando em "OK". Isto ocorre pois o programa trabalha com um outro formado de dados, fazendo inicialmente esta conversão do arquivo EDF. Na janela seguinte, um nome para este arquivo deve ser escolhido, sendo por padrão o mesmo do original.
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=0.6]{Dados/sleepexplorer02.jpg}
+   	\vspace{-1mm}
+   	\caption{\label{fig14} \textit{SleepExplorer Statistics}: definição dos dados do paciente para gravação do arquivo *.WR1.}
+	\end{center}
+	\vspace{-8mm}
+\end{figure}
+
+Em seguida, uma nova janela solicita os dados do paciente para a gravação do arquivo, conforme exemplificado na figura \ref{fig14}, onde todos os campos em amarelo devem ser preenchidos. Após o hipnograma é gerado. Para melhor visualização, desmarca-se todas as opções "Show fields", localizadas abaixo do hipnograma. A exportação é através do menu "File", "Save as picture", sendo o padrão bitmap o único formato compatível.
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[scale=0.40]{Dados/sleepexplorer03.jpg}
+   	\vspace{-1mm}
+   	\caption{\label{fig15} \textit{SleepExplorer Statistics}: hipnograma gerado após leitura do arquivo EDF.}
+	\end{center}
+	\vspace{-3mm}
+\end{figure}
+
+
+\chapter{Conclusão}
+Este tutorial apresentou uma visão inicial sobre a geração e manipulação de sinais cerebrais utilizando o padrão de dados EDF. Inicialmente, foi abordada a geração da bioeletricidade por nossas células através da revisão de alguns conceitos de química e biologia, seguido dos processos neurofisiológicos. Também foi abordado um dos métodos utilizados para o registro e digitalização destes sinais.
+
+A indicação de bases de dados disponíveis da rede mundial de computadores, bem como a sugestão de softwares para a manipulação destes sinais, visa apenas mostrar os primeiros passos a quem deseja trabalhar com estes sinais. 
+Como forma de sintetizar este tutorial, os passos sugeridos ao longo do texto são listados abaixo:
+\begin{itemize}
+	\item Revisar a teoria e identificar novos problemas ou aplicações com os sinais;
+	\item Fazer o download da base de dados disponível em \cite{5};
+	\item Utilizar a ferramenta \textit{ViewEDF} para visualização dos arquivos EDF;
+	\item Utilizar a ferramenta \textit{SleepExplorer Statistic Module} para visualização dos hipnogramas;
+	\item Associando as duas ferramentas, extrair as amostras de interesse do sinal através do Matlab;
+	\item Utilizar o Matlab ou desenvolver algoritmos para o processamento destes sinais.
+\end{itemize}
+
+Por fim, deve-se lembrar a multidisciplinaridade desta área, onde conhecimentos de química, biologia, medicina, matemática, física, computação e engenharia tornam possíveis os novos avanços e descobertas deste campo.
+
+\addtocontents{toc}{\protect \vspace{1ex}} \addcontentsline{toc}{section}{Referências}
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+\bibitem{1} SANCI, S. CHAMBERS, J. \textbf{\textit{EEG Signal Processing}.} John Wiley \& Sons. 2007.
+\bibitem{2} CARDOSO, S.H. \textbf{Comunicação entre as células nervosas.} Disponível em <http://www.cerebromente.org.br/n12/fundamentos/neurotransmissores/neurotransmitters2\_p.html>. Acesso em 20 dez. 2010.
+\bibitem{3} NISHIDA, S.M. \textbf{Apostila do Curso de Ciências Biológicas.} UNESP. 2009.
+\bibitem{4} \textbf{\textit{European Data Format}}. Disponível em <http://www.edfplus.info/index.html>. Acesso em 10 jan. 2011.
+\bibitem{5} \textbf{\textit{The Sleep-EDF Database.}} Disponível em <http://www.physionet.org/physiobank/database/sleep-edf/>. Acesso em 11 jan. 2011.
+\bibitem{6} \textbf{\textit{BioSig}.} Disponível em <http://biosig.sourceforge.net/>. Acesso em 11 jan. 2011.
+\bibitem{7} \textbf{\textit{SleepExplorer}.} Disponível em <http://www.el-raton.de/>. Acesso em 11 jan. 2011.
+\end{thebibliography}
+
+\end{document}

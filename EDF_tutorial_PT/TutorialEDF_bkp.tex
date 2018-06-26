@@ -1,0 +1,560 @@
+\documentclass[twoside]{ufsmreport}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{verbatim}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[latin1]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{indentfirst}
+\usepackage{url}
+
+\status{}{23 de Dezembro de 2010}
+
+\begin{document}
+
+\title{Trabalhando com sinais cerebrais} % no formato EDF
+\subtitle{\textit{European Data Format}}
+\oneauthor{Tiago da Silveira \ Alice Kozakevicius \ Cesar Rodrigues}
+\institute{\defaultaffiliation}
+\newcommand{\professor}{ }
+\institute{\defaultaffiliation}
+\runningauthor{Tiago da Silveira \ Alice Kozakevicius \ Cesar Rodrigues}
+\correspondingauthor{Tiago da Silveira \ Alice Kozakevicius \ Cesar Rodrigues}
+\telephone{ }
+\http{tiagodasilveira@gmail.com \\ http://www.ufsm.br}
+\UFSMreport{1}
+\author{Tiago da Silveira \\ Alice Kozakevicius \\ Cesar Rodrigues}
+\maketitle 
+
+\chapter{Introdução}
+Este trabalho destina-se à avaliação final da disciplina de Processamento de Sinais Elétricos e apresentará um estudo de filtros digitais implementados na plataforma PSoC - Programmable System On-Chip. O trabalho foi desenvolvido durante o semestre em questão, envolvendo pesquisa bibliográfica sobre a plataforma em estudo e sobre filtros digitais. Após a pesquisa inicial, compilou-se o material na forma de uma apostila, de modo a ser utilizada posteriormente em aula e em atividades de laboratório.
+
+Por questões didáticas, este estudo foi dividido em duas unidades: a primeira tratará exclusivamente da plataforma a qual o trabalho será desenvolvido, isto é, abordará uma introdução ao PSoC demonstrando suas funcionalidades e justificando o seu uso. Além disso, serão abordados detalhes de sua arquitetura interna e funcionamento, bem como exemplos para familiarizar o leitor com sua utilização. Por fim, ainda na mesma unidade, será apresentada uma revisão de programação na linguagem C, utilizada extensivamente nesta plataforma.
+
+A segunda unidade trata do processamento digital de sinais e do desenvolvimento de um filtro de áudio, objetivo principal deste estudo. Assim, é dada uma introdução à conversão de sinais analógicos para sinais digitais e a alguns tipos de filtros possíveis de serem implementados em dispositivos PSoC. 
+
+Em relação ao tema de estudo, embora o processamento de sinais seja uma área da ciência moderna -- ainda mais tratando-se de processamento digital -- verifica-se que tal atividade tem acompanhado a humanidade há muito tempo. Aliás, o desenvolvimento da ciência e do aprendizado teve início na história a partir do momento em que o homem passou a processar os sinais que recebia de seu meio. O desenvolvimento da agricultura, por exemplo, foi resultado da observação de sinais naturais, tal como a posição das estrelas e a consequente interpretação das estações. Desde então, a evolução tem ocorrido de forma exponencial: do sinal de fumaça à escrita, e desta última para incontáveis bits à velocidade da luz.
+
+\part{Programmable System On-Chip}
+
+\chapter{Arquitetura e funcionamento}
+
+\section{Introdução ao PSoC}
+
+Todos sabem hoje da forte presença de circuitos integrados nos mais diversos tipos de equipamentos eletrônicos: de robustas máquinas industriais a simples brinquedos infantis. A integração de circuitos em encapsulamentos cada vez menor e com mais facilidades e velocidades é sempre um desafio de engenharia.
+
+%Fonte de referência [2]
+Uma das tecnologias atuais na fabricação de circuitos integrados são os chips SoC -- System-on-Chip. São circuitos integrados a um nível em que uma única pastilha é capaz de trabalhar com sinais digitais, analógicos, sinais mistos e rádio-frequência. São tipicamente utilizados em sistemas embarcados, desde microcontroladores a processadores dedicados. No entanto, o projeto e fabricação destes chips se torna viável e prática apenas para grandes quantidades.
+
+%Fonte de referência [1]
+Neste contexto, a fabricante Cypress surgiu com uma nova proposta, o PSoC - Programmable System-on-Chip. Consiste em uma família de chips que integra um microcontrolador a periféricos digitais e analógicos configuráveis. Isto é, o desenvolvedor consegue programar quais periféricos analógicos ou digitais utilizará e de que forma disponibilizará isto no chip, otimizando assim a aplicação em seu projeto.
+
+O dispositivo é configurado via software e sua estrutura é uma matriz de sinais digitais e analógicos construída junto ao núcleo de um microcontrolador. Este núcleo, de propriedade da Cypress e denominado M8C, é de 8 bits e possui arquitetura Harvard. Ainda, o PSoC possui três espaços separados de memória: a SRAM paginada para dados, memória Flash para instruções e dados fixos, e registradores de I/O para o controle e acesso das funções e blocos lógicos que podem ser programados.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.8]{fig01.jpg}
+	\caption{Diagrama em blocos da arquitetura do PSoC.}
+	\label{fig01}
+	\end{center}
+\end{figure}
+
+Na figura \ref{fig01} é possível verificar o diagrama em blocos da arquitetura do PSoC, onde cada bloco será comentado a seguir.
+
+\section{Arquiteturas Von Neumann, Harvard, RISC e CISC}
+Antes de nos determos no estudo dos blocos que compõe o PSoC, é interessante verificarmos qual é a arquitetura que o dispositivo utiliza. Por arquitetura de hardware de um computador (seja ele um microprocessador ou microcontrolador) entende-se o seu projeto operacional básico, isto é, a forma que seus componentes funcionarão e operarão entre si. Atualmente duas arquiteturas são amplamente utilizadas: a arquitetura de Von Neumann e a arquitetura Harvard.
+
+%Fonte de referência [3]
+A primeira foi criada por John Von Neumann, pioneiro no desenvolvimento de computadores, e é utilizada na maioria dos microcomputadores. Tal arquitetura define como componentes principais uma unidade central de processamento (CPU - Central Processing Unit), a memória e os dispositivos de entrada e saída. As instruções e os dados nesta arquitetura são armazenados na mesma memória e utilizam o mesmo barramento para acessá-los. Sua vantagem, portanto, é a otimização de espaço.
+
+%Fonte de referência [4]
+Já a arquitetura Harvard - cujo nome é alusivo ao Harvard Mark I, criado pela IBM em 1944 - também utiliza os mesmos componentes principais, com a diferença de que dados e instruções são armazenados em memórias separadas e acessados por barramentos diferentes. Devido a este paralelismo no acesso às informações, a velocidade de processamento é mais eficiente.
+
+Além da arquitetura de hardware ser do tipo Von Neumann ou Harvard, o processador também é projetado para operar numa arquitetura lógica, que pode ser do tipo RISC ou CISC. A arquitetura RISC -- Reduced Instruction Set Computer -- define um computador com um conjunto reduzido de instruções, ou seja, geralmente pouco mais de 30 instruções existentes são utilizadas várias vezes para executar um comando. Em contrapartida temos a arquitetura CISC -- Complex Instruction Set Computer -- ou um computador com conjunto de instruções complexas. Estas últimas facilitam em muito a programação por parte do usuário e possibilita que um único comando faça o processador executar várias tarefas.
+
+Em geral, de acordo com a maioria dos dispositivos encontrados no mercado, processadores que utilizam a arquitetura Von Neumann geralmente utilizam instruções do tipo CISC. Já processadores de arquitetura Harvard utilizam instruções RISC. O processador M8C utilizado pelo PSoC, no entanto, não se vale desta regra, sendo de arquitetura Harvard (para utilizar-se do processamento paralelo) e de instruções CISC, para facilitar o programador habituado com outras famílias de microcontroladores.
+
+\section{Núcleo}
+Como já dito, o PSoC utiliza o processador M8C em seu núcleo (Core). Este processador é capaz de manipular dados de 8 bits a uma velocidade de 4 MIPS (milhões de instruções por segundo). O fato interessante do PSoC é que seu núcleo não contém inicialmente nenhum componente interno, estes devem ser selecionados pelo usuário antes mesmo de começar a programar. O resultado disso é um funcionamento mais leve do processador, disponibilizando recursos não utilizados para outras aplicações.
+
+Para compreendermos melhor, podemos analisar um microcontrolador HC08. Nele o timer, por exemplo, é inerente ao núcleo e, mesmo que não o utilizemos, este ocupa interrupções e recursos do processador, mesmo quando inativo, além de impossibilitar que tais recursos sejam utilizados para uma outra aplicação.
+
+A desvantagem de toda esta flexibilidade, entretanto, está em um processo inicial mais demorado. Antes de programar sua aplicação propriamente dita, o usuário deve carregar cada componente que deseja utilizar, além de alocá-lo e configurá-lo. Até mesmo as portas de comunicação necessitam de configurações tais como nomes, drivers e conexões com barramentos. Quem almeja um desenvolvimento imediato ou um iniciante que não domina tantos detalhes de um microcontrolador, tal liberdade de hardware pode ser um pouco demasiada. Entretanto isso é superado por softwares disponibilizados pela Cypress (PSoC Express) ou pela decorrente prática e uso.
+
+A seguir, cada parte interna do núcleo será detalhada.
+
+\subsection{SRAM}
+O módulo de memória SRAM (Static RAM) do PSoC é, na família CY8C29X66, de 2KB. No entanto, o StackPointer, registrador o qual realiza o endereçamento da memória RAM, é de apenas 8 bits, o que possibilita apenas 256 endereçamentos. Nesse caso, a memória SRAM desta família é paginada em 8 páginas de 256 bytes e o usuário, quando programando em assembly, deve definir em qual página serão escritos os dados. Quando for programado em C esta operação é transparente ao programador, sendo realizada pelo compilador.
+
+\subsection{SROM}
+A SROM - Supervisory ROM, é a porção de memória do PSoC onde ficam armazenados os códigos de boot do processador, sendo possível ler dados de configuração, tal como a frequência do oscilador, bem como controlar as funções da memória Flash. A Cypress fornece seções de códigos apropriadas para manipular a memória ROM supervisória, para alterar parâmetros avançados ou atualizações.
+
+\subsection{Flash Nonvolatile Memory}
+A memória Flash é utilizada no PSoC para armazenar os dados gerados ou necessários à aplicação. O tipo Flash empregado é não-volátil, isto é, mantém os dados armazenados mesmo após ser desligada da alimentação. Sua vida útil é de aproximadamente 500 mil gravações e sua arquitetura está dividida em blocos de 64 bytes. A capacidade desta memória depende de qual família se está trabalhando. No caso, a família CY8C29X66 disponibiliza 32KB.
+
+É interessante perceber como o PSoC faz a divisão de memória. A SRAM é a memória volátil utilizada para armazenar dados e variáveis durante a execução do programa. A SROM é, na verdade, um espaço reservado na memória Flash, não-volátil, cuja uma das funções é controlar o uso do restante da memória. Outra parte da memória Flash, que podemos denominar ROM, é onde será gravado o programa criado pelo usuário. O restante, é disponibilizado para armazenar resultados da aplicação bem como outros dados, o que geralmente em outros microcontroladores é feito utilizando-se uma memória do tipo EEPROM. Para isso, é disponibilizado ao usuário, durante a programação do PSoC, blocos de memória Flash que emulam uma EEPROM real. Com este artifício, a área do PSoC se manteve reduzida, já que os módulos de memória EEPROM são volumosos, comparados aos da memória flash.
+
+\subsection{Sleep and Watchdog}
+Este módulo contém duas funções que podem ser ativadas pelo programador. A primeira, o modo Sleep, coloca o processador num modo de funcionamento de baixo consumo de energia, de modo que o sistema possa funcionar com baterias. Para realizar isto, alguns periféricos e módulos analógicos são desligados e a frequência do oscilador é diminuída. Caso seja necessário utilizá-los, é acionado um sinal de "`Wake up"', entrando, após o uso, novamente em estado de baixo consumo.
+
+A segunda função, Watchdog, funciona de maneira semelhante aos outros microcontroladores que possuem tal recurso. Quanto ativado, é necessário que um registrador seja ressetado ciclicamente dentro do código. Assim, caso alguma rotina trave a CPU em algum ponto, ocorrerá um estouro do registrador do Watchdog e o sistema será reinicializado.
+
+\subsection{Interrupt Controller}
+O controlador de interrupções do PSoC é um mecanismo para gerenciar os recursos de hardware, direcionando a execução do programa para um novo endereço de memória após receber uma interrupção, verificada através de uma lista de prioridades. O PSoC da família CY8C29X66 possui um total de 26 vetores de interrupção, sendo 16 provenientes de módulos digitais, 4 configurados pelos módulos analógicos, 6 relacionados ao núcleo do processador, além da interrupção de Reset, Supply Voltage Monitor, VC3, GPIO (entrada e saída de propósito geral), I2C e Sleep Timer.
+
+\subsection{Multiple Clock Sources}
+Além do oscilador principal, o PSoC disponibiliza várias outras fontes de clock. Entre elas:
+\begin{itemize}
+	\item IMO -- Internal Main Oscilator: é o oscilador principal do PSoC, operando em uma frequência de 24MHz. Todos os outros osciladores são derivados deste. Possui duas saídas, Sysclk e Sysclk2, sendo esta última o clock de 24MHz multiplicado por 2, fornecendo 48MHz para ser utilizado pelos módulos, uma vez que a CPU opera na taxa máxima de 24MHz.
+	\item ILO -- Internal Low Speed Oscilator: é um oscilador interno de baixa frequência, 32kHz, utilizado pelo processador quando no modo Sleep. 
+	\item ECO -- External Clock Oscilator: o oscilador interno do PSoC é do tipo RC com variação de aproximadamente 2.5\% na frequência. Para aplicações em que se exige precisões maiores, o PSoC permite a utilização de um cristal externo, cuja faixa de operação deve estar entre 1MHz e 24MHz.
+	\item PLL - Phase Locked Loop: fornece diversas fontes de clock utilizando como referência o ILO, sendo configurado pelo programador.
+\end{itemize}
+
+\section{Matrizes e portas}
+Até o momento já vimos o funcionamento interno do núcleo do PSoC. no entanto, como ele está conectado às outras unidades e como estas são programadas? 
+
+\subsection{Portas de comunicação e barramentos}
+As portas de comunicação, também denominadas GPIO (General Purpose IO), são os circuitos responsáveis pelo interfaceamento entre os pinos de entrada e saída do chip e os dispositivos internos do PSoC. Ou seja, o bloco GPIO provê a conexão entre o núcleo do processador M8C e o mundo externo. Como o PSoC possui o recurso de reconfiguração dinâmica, é possível reconfigurar o chip inteiramente com novos blocos e ligações, definindo assim a utilização para cada porta.
+
+Devemos lembrar que uma porta de comunicação retém o dado de entrada ou saída, diferente de um barramento que apenas transmite. Daí a necessidade de cada porta possuir um driver, isto é, um circuito responsável por tratar o sinal de uma determinada maneira.  No PSoC todos os pinos são flutuantes, não tendo um drive específico para eles. É possível, então, configurarmos o driver de cada pino de maneiras diferentes, sejam até mesmo pinos pertencentes à mesma porta.
+
+Os tipos de drivers são selecionados modificando os registradores DM2, DM1 e DM0 de cada pino, seja no início da programação do PSoC ou durante a execução. São possíveis 8 configurações:
+
+%Na revisão, explicar o funcionamento de cada driver e colocar os pinos em tabela.
+\begin{center}
+\begin{tabular}{|c||c|c|c|}
+	\hline
+	\multicolumn{4}{|c|}{Possíveis configurações de drivers}\\
+	\hline
+	&	\multicolumn{3}{c|}{Registradores}\\
+	\cline{2-4}
+	Driver	&	DM2	&	DM1	&	DM0	\\
+	\hline
+	Resistência de Pull Down	&	0	&	0	&	0 \\
+	Strong	&	0	&	0	&	1 \\
+	Hi-Z	&	0	&	1	&	0	\\
+	Resistência de Pull Up	&	0	&	1	&	1	\\
+	Open Drain High	&	1	&	0	&	0	\\
+	Strong Slow	&	1	&	0	&	1	\\
+	Hi-Z analógico	&	1	&	1	&	0	\\
+	Open Drain Low	&	1	&	1	&	1	\\
+	\hline
+\end{tabular}
+\end{center}
+	
+Como pode ser visto na figura \ref{fig01}, o PSoC possui barramentos distintos para conexões digitais ou analógicas. As portas estudadas anteriormente são conectadas aos módulos através destes barramentos. Todas as portas podem ser conectadas ao barramento digital, porém apenas as portas [0], [1] e [2] podem conectar-se ao barramento analógico. Na mesma configuração, porém, um pino nunca poderá receber informações digitais e analógicas ao mesmo tempo.
+
+\subsection{Matriz Digital}
+Uma característica interessante e inovadora do PSoC é justamente suas matrizes digital e analógica programáveis. Os módulos desejados são alocados pelo usuário em uma matriz, isto é, um arranjo composto por blocos em linhas, sendo possível conectar estes módulos a qualquer pino de entrada e saida, bem como a outros módulos. O número de blocos digitais, ou seja, o tamanho da matriz, depende da família do chip a qual se está trabalhando, devendo ser escolhida de acordo com cada projeto.
+
+Na figura \ref{fig02} podemos ver a disposição de parte da matriz digital para o CY8C29X66, tal como as linhas de blocos digitais, bem como os pinos de entrada, pinos de saída e os barramentos.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.67]{fig02.jpg}
+	\caption{Visão da matriz digital no PSoC}
+	\label{fig02}
+	\end{center}
+\end{figure}
+
+\subsection{Matriz Analógica}
+A matriz analógica opera de maneira semelhante à matriz digital, com a diferença de que cada um de seus blocos é composto por circuitos com amplificadores operacionais, permitindo a criação e modelagem de um fluxo complexo de sinais. Nesses blocos é possível implementar módulos em tempo contínuo, com capacitores chaveados, entre outras funcionalidades. A matriz analógica, no entanto, opera de maneira totalmente separada da matriz digital. Tanto é que, ao designarmos um pino para uma conexão analógica, o mesmo é desconectado da matriz digital, e vice-versa.
+
+Na figura \ref{fig03} é exibida a disposição da matriz analógica para o CY8C29X66 e suas conexões.
+
+\begin{figure}[b]
+	\begin{center}
+	\includegraphics[scale=0.67]{fig03.jpg}
+	\caption{Visão da matriz analógica no PSoC}
+	\label{fig03}
+	\end{center}
+\end{figure}
+
+\section{Recursos do sistema}
+Temos os seguintes recursos disponíveis para o PSoC, variando de acordo com a família do chip escolhida:
+\begin{itemize}
+	\item Digital clocks: utilizando PLL, o PSoC é capaz de multiplicar o clock de referência de 32kHz em outras fontes diferentes:
+	\subitem SisClk: clock do sistema, geralmente 24MHz;
+	\subitem VC1: utiliza um divisor de 4 bits. Assim, recebe o sinal do SisClk e divide de 1 até 16;
+	\subitem VC2: recebe o sinal proveniente de VC1 e o divide novamente, também com um divisor de 4 bits;
+	\subitem VC3 Source: é um novo divisor onde o usuário escolhe qual será a fonte de referência do clock, podendo ser VC1, VC2 ou até mesmo SisClk. É também possível duplicar alguma frequência por 2;
+	\subitem VC3: utiliza um divisor de 8 bits, dividindo o sinal de VC3 Source de 1 a 256 partes.
+	\item Multiply accumulates (MACs): é um recurso utilizado em DSPs para realizar multiplicações sucessivas em um processamento paralelo à CPU, gerando um resultado de forma muito mais rápida.
+	\item Decimador: módulo utilizado pelos conversores AD. O PSoC possui conversores AD de apenas um único bit. Assim, o decimador integra esses dados em até 16 bits, resultando em uma palavra digital.
+	\item I2C: protocolo para comunicação serial.
+	\item Internal Voltage Reference: tensão interna de referência de 1.3V.
+	\item Switch Mode Pump: recurso que possibilita trabalhar-se com uma tensão abaixo da nominal.
+\end{itemize}
+
+\section{A família CY8C29X66}
+Neste estudo utilizaremos um kit de desenvolvimento utilizando um PSoC da família CY8C29XX. Dessa forma, é interessante verificarmos as particularidades e recursos específicos desta família:
+
+\begin{itemize}
+\item Digital IO (max):	64
+\item Digital rows:		4
+\item Digital blocks:	16
+\item Analog inputs:	12
+\item Analog outputs:	4
+\item Analog columns:	4
+\item Analog blocks:	12
+\item Amount of SRAM:	2KB
+\item Amount of Flash:	32KB
+\end{itemize}
+
+Na figura \ref{fig04} é mostrada a disposição padrão dos pinos de entrada e saída, com a descrição das funções na tabela da figura \ref{fig06} para o chip em estudo.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.74]{fig04.jpg}
+	\caption{Disposição dos pinos do CY8C29X66.}
+	\label{fig04}
+	\end{center}
+\end{figure}
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.74]{fig06.jpg}
+	\caption{Descrição e função dos pinos do CY8C29X66.}
+	\label{fig06}
+	\end{center}
+\end{figure}
+
+\chapter{A Interface de Desenvolvimento}
+O PSoC Designer é uma ferramenta completa de desenvolvimento fornecida pela Cypress. Com este aplicativo, é possível criar projetos de duas diferentes formas: Chip-Level e System-Level. O próprio PSoC Designer oferece um tutorial prático utilizando as duas formas de desenvolvimento. Assim, aconselha-se a todo estudante interessado nesta plataforma a instalar o software e a executar estes tutoriais primeiramente.
+
+\section{Projeto em Chip-Level}
+Ao escolher criar um projeto neste nível, o usuário especifica exatamente como quer que o dispositivo seja configurado, tendo assim acesso total a todas as funcionalidades e configurações do PSoC e da sua aplicação, tanto em hardware quanto em software. O desenvolvimento do projeto se dá através dos seguintes passos:
+\begin{enumerate}
+\item Criar um novo projeto;
+\item Escolher o modelo do PSoC o qual se quer trabalhar;
+\item Escolher e configurar os módulos que darão ao PSoC as funcionalidades desejadas;
+\item Realizar as conexões necessárias dos módulos entre si e aos pinos apropriados;
+\item Escrever o firmware da aplicação em C ou assembly;
+\item Programar o PSoC e testar a aplicação.
+\end{enumerate}
+
+\section{Projeto em System-Level}
+Esta outra maneira de desenvolver uma aplicação no PSoC está focada mais na funcionalidade e no objetivo da aplicação do que na forma como ela será realizada. Assim, basta definir o que se deseja e o PSoC é configurado automaticamente, assim como a geração do código. Para isso, segue-se os seguintes passos:
+\begin{enumerate}
+\item Criar um novo projeto;
+\item Selecionar as entradas e saídas do sistema;
+\item Definir o comportamento das entradas e das saídas;
+\item Simular e verificar o funcionamento do projeto;
+\item Gerar o programa;
+\item Programar o PSoC e testar a aplicação.
+\end{enumerate}
+
+\chapter{Programação em C}
+O PSoC permite o desenvolvimento de aplicações tanto na linguagem C como também em assembly. Ambas linguagens possuem suas vantagens, desvantagens e particularidades. Neste estudo nos deteremos a aplicações utilizando a linguagem C, devido a sua robustez e facilidade de programação, comparada com códigos assembly.
+
+\section{História da linguagem}
+A linguagem de programação C destaca-se por sua robustez, pois, embora seja uma linguagem de alto nível, permite ao programador ter controle total do hardware desenvolvendo assim o software adequado as suas necessidades. Nos sistemas embarcados, a linguagem C possui significativas vantagens em relação às outras e até mesmo em relação à linguagem assembly, devido a sua sintaxe de alto nível. 
+Inicialmente, seu desenvolvimento ocorreu nos AT\&T Bell Labs, entre 1969 e 1973. O nome partiu do fato de muitas de suas características derivarem da linguagem B (essencialmente uma simplificação da linguagem BCPL, também criada nos Bell Labs). A linguagem foi originalmente desenvolvida para a implementação do sistema UNIX (originalmente escrito em PDP-7 Assembly, por Dennis Ritchie e Ken Thompson). Em 1973, com a adição do tipo struct, C tornou-se poderoso o bastante para que a maioria das partes do Kernel do UNIX fosse reescrita em C.
+
+Durante os finais da década de 1970, a linguagem C começou a substituir a linguagem BASIC como a linguagem de programação de microcomputadores mais usada. Durante a década de 1980, foi adaptada para uso no PC IBM, e a sua popularidade começou a aumentar significativamente. Ao mesmo tempo, Bjarne Stroustrup, juntamente com outros nos laboratórios Bell, começou a trabalhar num projeto onde se adicionavam construções de linguagens de programação orientada por objetos à linguagem C. A linguagem que eles produziram, chamada C++, é nos dias de hoje a linguagem de programação mais comum no Windows, sendo o C ainda o mais popular no desenvolvimento em plataformas UNIX, LINUX e dispositivos embarcados.
+
+Em 1983, o instituto norte-americano de padrões (ANSI) formou um comitê para estabelecer uma especificação do padrão da linguagem C. Após um processo longo e árduo, o padrão foi completo em 1989 e ratificado como ANSI X3.159-1989 ``Programming Language C'', freqüentemente referida como ANSI C. Para o desenvolvimento de sistemas embarcados, a utilização de uma linguagem padronizada é de extrema importância, uma vez que permite a portabilidade e o uso do mesmo código em diferentes compiladores e a adaptação para microcontroladores de diversos fabricantes. 
+
+\section{Aspectos gerais}
+Primeiramente, é importante lembrar que na programação do PSoC, assim como de qualquer microcontrolador, os comandos utilizados da linguagem C devem ser apenas aqueles compreendidos pelo Padrão Ansi C. Ou seja, comandos e funções existentes em alguns compiladores para PC não estarão disponíveis nos compiladores destes dispositivos embarcados. Na prática, isto não acarreta em limitação alguma, uma vez que toda a robustez e funcionalidade da linguagem é mantida em sua forma padrão.
+
+Outro detalhes importante é que este capítulo destina-se a ser apenas uma revisão rápida dos principais aspectos da linguagem utilizados na programação de PSoCs, pressupondo que o leitor já tenha conhecimentos e habilidades anteriores de programação em C.
+\section{Variáveis e tipos}
+O C possui quatro tipos básicos de variáveis:
+\begin{itemize}
+\item Int
+\item Float
+\item Char
+\item Double
+\end{itemize}
+
+Estes tipos podem ser alterados através dos modificadores signed, unsigned, short e long.
+
+\section{Operadores}
+Os principais operadores utilizados na linguagem C estão dispostos na tabela da figura \ref{fig05}. Entre eles, estão os operadores aritméticos simples, os operadores compostos, os operadores relacionais e conectores lógicos.
+
+\begin{figure}[b]
+	\begin{center}
+	\includegraphics[scale=0.85]{fig05.jpg}
+	\caption{Operadores da linguagem C.}
+	\label{fig05}
+	\end{center}
+\end{figure}
+
+\section{Controle de fluxo}
+O Controle de fluxo na linguagem C é realizado através das seguintes instruções:
+\begin{itemize}
+\item if ... else if ... else;
+\item while();
+\item do{} while();
+\item for(variavel; condição; incremento);
+\end{itemize}
+
+%\section{Ponteiros} Inserir na próxima versão.
+\section{Inserção de código assembly}
+Em alguns casos específicos é necessário inserir algumas instruções em assembly dentro do código em C. Para isso, é utilizada a função ``asm()'', conforme o exemplo abaixo:
+
+\begin{center}
+asm(``mov a, \#01h'');
+\end{center}
+
+
+\part{Processamento de Sinais - Filtros}
+
+\chapter{Filtros Digitais}
+\section{Conversão A/D}
+Filtros digitais trabalham, obviamente, com sinais digitalizados. Portanto, é importante, antes de estudarmos mais a fundo o funcionamento destes filtros, compreendermos como é feito o processo de digitalização de um sinal, já que em sua forma natural a maioria dos sinais os quais lidamos e processamos são analógicos. 
+
+A conversão analógico-digital (A/D) é o processo que possibilita a representação de sinais analógicos no mundo digital. Desta forma é possível utilizar os dados extraídos do mundo real para cálculos ou operações entre seus valores. Tal processo é realizado por circuitos denominados conversores AD e o processo inverso por conversores DA. Estes circuitos podem ser externos ao processador, embora atualmente a grande maioria dos microcontroladores e processadores já possuam algum conversor AD integrado.
+
+Basicamente, o conversor AD é um bloco cuja entrada recebe sinais contínuos variando entre dois níveis de tensão pré-estipulados, geralmente -5V e +5V. Na saída, o mesmo sinal é amostrado em um dado intervalo de tempo fixo -- determinado pela freqüência de amostragem. Este processo disponibiliza amostras de um certo valor que representa o sinal original naquele instante, isto é, um sinal amostrado e quantizado.
+
+A frequência de amostragem é o número de amostras capturadas por segundo e, portanto, medida em Hertz. Teremos uma taxa de amostragem adequada quando for possível reconstruir o sinal analógico de maneira satisfatória à partir das amostras obtidas pelo conversor AD. O teorema de Nyquist nos diz que um sinal contínuo pode ser amostrado adequadamente desde que tenha banda limitada, isto é, seu espectro de freqüência não contenha freqüências acima de um valor máximo, Fmáx. Além disso, a taxa de amostragem, Fa, deve ser escolhida para ser no mínimo duas vezes maior que a freqüência máxima Fmáx. Assim, para representarmos um sinal de 10kHz, por exemplo, é necessário que o amostremos a uma taxa mínima de 20kHz.
+
+Existem várias técnicas diferentes de conversão AD, entre elas a de comparação por aproximações sucessivas -- onde a amostra é retida e então comparada com um valor arbitrado. Se o valor comparado for menor ou maior que a referência, desloca-se o bit para a esquerda ou direita, respectivamente. Assim sucessivamente até corresponder ao valor quantizado. Outra técnica é utilizada nos conversores incrementais ou então nos conversores Delta-Sigma. 
+
+No PSoC, temos os seguintes tipos de conversores AD disponíveis, cujos detalhes de funcionamento são encontrados nos próprios datasheets:
+\begin{itemize}
+\item ADCInc (ADC incremental)
+\item ADCInc12 (ADC Incremental de 12 bits)
+\item ADCInc14 (ADC Incremental de 14 bits)
+\item ADCIncVR (ADC Incremental de Resolução Variável)
+\item DelSig8 (ADC Delta Sigma de 8 bits)
+\item DelSig11 (ADC Delta Sigma de 11 bits)
+\item DualADC (ADC Incremental de 2 entradas)
+\item DualADC8 (ADC Incremental de 8 bits e 2 entradas)
+\item DelSig (ADC Delta Sigma)
+\item SAR6 (ADC por aproximação sucessiva de 6 bits)
+\item TriADC (ADC Incremental de 3 entradas)
+\item TriADC8 (ADC Incremental de 8 bits e 3 entradas)
+\end{itemize}
+
+Ao trabalharmos com processamento digital de sinais, devemos considerar também o tempo total de conversão, principalmente se estivermos considerando processamento em tempo real. Entre outros fatores, a duração da conversão depende do tempo de amostragem, da frequência de barramento do microcontrolador, da frequência de clock da conversão (isto é, o processamento realizado para aproximações sucessivas, por exemplo), bem como do modo de resolução da conversão (8, 12 ou 16 bits, por exemplo).
+
+\section{Tipos de filtros digitais}
+Todo sistema linear, ou neste caso, todo filtro linear, possui três características de extrema importância: a resposta ao impulso, resposta de passo e a resposta em frequência. A primeira, é a resposta do sistema ao ser colocada na sua entrada um impulso unitário. A importância destas três características é que cada uma descreve certas características do filtro em estudo e uma pode ser obtida através da outra. Assim, ao integrarmos a resposta ao impulso obtemos a resposta de passo, ao mesmo tempo que obtemos a resposta em frequência ao realizarmos a transformada de Fourier da resposta ao impulso.
+
+Com esses conceitos, temos o núcleo do filtro (filter kernel), que é a resposta ao impulso usada para implementar um filtro digital através da convolução deste núcleo com o sinal de entrada. Um filtro implementado desta maneira será do tipo FIR - Finite Impulso Response, uma vez que a convolução terá elementos finitos.
+
+Outra forma de implementar-se filtros digitais é utilizando recursividade. Ao invés de utilizar um único núcleo, o filtro é definido por um conjunto de coeficientes de recursão, que utilizam a saída da amostra anterior. No entanto, este filtro nem sempre é estável e é do tipo IIR - Infinte Impulse Response.
+
+Quanto à resposta em frequência, esta pode ser plotada em um gráfico com eixo linear ou então em escala logarítmica (em decibels). A representação em escala linear é apropriada para mostrar a flutuação na banda de passagem (passband ripple) e a largura da faixa de transição, enquanto que a escala em decibels representa melhor a flutuação na banda de rejeição.
+
+\subsection{Decibéis}
+Em uma breve revisão sobre decibeis, devemos lembrar que cada 10dB significa que a potência foi alterada por um fator de 10. Como em processamento de sinais geralmente trabalhamos com a amplitude de um sinal e não sua potência, podemos observar a seguinte relação:
+
+\[dB=10\log\frac{P_2}{P_1}\]
+
+Como a potência de um sinal está relacionada ao quadrado de suas amplitudes (por exemplo, a potência elétrica é o sinal da corrente vezes o sinal da tensão), para a amplitude temos:
+
+\[dB=20\log\frac{A_2}{A_1}\]
+
+Assim, decibéis são utilizados especialmente para descrever o ganho de um sistema, ou seja, a relação entre os sinais de saída e entrada. Engenheiros também utilizam decibéis para especificar a amplitude de um único sinal, sendo necessário referenciá-lo neste caso a um sinal padrão, tal como por exemplo dBm e dBV, onde o sinal medido é referenciado a 1mW e 1V, respectivamente.
+
+\subsection{Representação no domínio do tempo}
+A a informação pode ser representada tanto no domínio do tempo quanto no domínio da frequência. No primeiro caso, descrevemos exatamente quando a informação ocorre e qual é a amplitude desta ocorrência. Assim, podemos definir alguns parãmetros importantes quando estivermos trabalhando com este tipo de representação, geralmente definido na resposta de passo (step response), já que é este tipo de resposta que nos proporciona facilmente a idéia de como o sinal se comporta ao longo do tempo:
+
+\begin{itemize}
+\item Step response: deve ser a mais rápida possível, indicando uma velocidade de transição maior.
+\item Risetime: de acordo com o item anterior, quanto menor o tempo de subida, melhor o filtro. É medido pelo número de amostras entre 10\% e 90\% dos níveis de amplitude.
+\item Overshoot: este parâmetro geralmente deve ser eliminado, uma vez que altera a amplitude das amostras no sinal. O overshoot é a quantidade que extrapola a amplitude nominal do sinal e às vezes pode ser proveniente do circuito ou algoritmo do próprio filtro ao invés do sinal medido.
+\item Fase linear: indica uma resposta simétrica entre a metade superior e a metade inferior da resposta de passo. 
+\end{itemize}
+
+\subsection{Representação no domínio da frequência}
+Em contraste com a informação representada no domínio do tempo, que está diretamente associada a forma como percebemos o sinal no decorrer do tempo, a representação na domínio da frequência se dá de modo um pouco mais indireto, sugerindo apenas periodicidade. Na prática, ambas as formas de representação nos mostram que não é possível construir filtros eficientes para ambas aplicações, isto é, para aquelas em que se deseja controlar a qualidade do sinal no domínio do tempo, tal como remover ruídos ou características da amplitude do sinal, bem como aquelas na frequência, relacionadas à periodicidade e à separação de frequências.
+
+Assim, na representação de sinais no domínio da frequência temos outros parâmetros de interesse. Primeiramente definimos uma banda de passagem, aquela na qual as frequências são desejadas, uma banda de rejeição, a qual queremos que as frequências contida nela sejam filtradas, e uma banda de transição, intermediária entre a banda de passagem e a banda de rejeição. É na banda de transição que definimos a frequência de corte, definida como 3dB em um filtro analógico ou então 0,707 do valor nominal. Em um filtro digital, entretanto, essa referência é bem menos padronizada, podendo ser alterada para 50\%, uma vez que facilita a simetria e o desenvolvimento do algoritmo.
+
+Entre as respostas em frequência mais comuns, podemos ter filtros passa-baixa, passa-alta, passa-faixa e rejeita-faixa. Cada um permitindo a passagem de uma gama de frequências de interesse. Entre os parâmetros utilizados no desenvolvimento de filtros no domínio da frequência, estão uma rápida transição, isto é, um rápido decaimento; Além disso, não é desejado nenhuma flutuação na banda de passagem, garantindo a qualidade do sinal; e por fim, deseja-se uma boa atenuação na faixa de rejeição, evitando qualquer sinal indesejado. Neste tipo de aplicação, a fase do sinal é pouco importante pois não exerce grande impacto.
+
+\subsection{Considerações gerais}
+Podemos fazer algumas considerações sobre a conversão da resposta ao impulso na resposta em frequência, que é feita através da DFT - Discrete Fourier Transform, ou Transformada de Fourier Discreta. Este algoritmo, no entanto, é bastante lento e muitas vezes ocupa grande poder de processamento do microcontrolador, tornando-se inviável para aplicações em tempo real. Assim, surge um novo algoritmo bastante utilizado, o FFT - Fast Fourier Transform, ou Transformada Rápida de Fourier. Para utilização deste algoritmo deve-se utilizar apenas sinais com amostras cujo comprimenta seja na potência de dois. Ainda, novamente deve ser lembrado que as frequências amostradas não podem ser mais altas que a metade da taxa de amostragem.
+
+Outra consideração a ser feita sobre filtros digitais é que podemos construir facilmente os outros tipos de filtro através de um filtro passa-baixas, utilizando técnicas de inversão e reversão de espectro. Isto é, podemos construir um filtro passa-altas, por exemplo, simplesmente subtraindo um filtro passa-baixas de um que deixe passar toda a faixa de frequências. Tal tipo de implementação é facilmente realizável em filtros digitais, uma vez que são implementados através de equações de diferenças.
+
+\subsection{Classificações dos filtros digitais}
+Em geral, considerando as discussões acima, podemos classificar os filtros digitais em três tipos:
+\begin{itemize}
+\item Filtros no domínio do tempo: são utilizados quando a informação é codificada através da forma de onda do sinal. Exemplos de utilização é a remoção de sinais DC em corrente alternada, modulação em amplitude etc.
+\item Filtros no domínio da frequência: são utilizados quando a informação está contida na amplitude, frequência e fase de componentes senoidais. O objetivo principal deste tipo de filtros é separar uma banda de frequência da outra.
+\item Filtros Personalizados: são aqueles utilizados quando uma ação especial é necessária, geralmente misturando conceitos de filtros tanto do domínio do tempo quanto no da frequência.
+\end{itemize}
+
+Na figura \ref{fig07} podemos visualizar a melhor forma de implementar um filtro digital de acordo com a sua aplicação. Em nosso estudo, como desejamos implementar um filtro do tipo FIR para a separação de frequências, verificamos que o melhor filtro a ser implementado é de janelamento (Windowed-Sinc), que será estudado no próximo capítulo.
+
+\begin{figure}[b]
+	\begin{center}
+	\includegraphics[scale=0.6]{fig07.jpg}
+	\caption{Tipos de filtros digitais}
+	\label{fig07}
+	\end{center}
+\end{figure}
+
+\section{Filtros FIR - Windowed-Sinc}
+Filtros Windowed-sinc são também chamados de filtros por janelamento. São filtros FIR utilizados para separar bandas de frequência de um sinal. Por serem do tipo FIR, são bastante estáveis e raramente produzem resultados inesperados, podendo também ser desenvolvidos para alcançar altas performances. Em contrapartida, a existência dessas distintas características no domínio da frequência o tornam uma péssima escolha para aplicações no domínio do tempo, uma vez que possui bastante flutuação e overshoot na resposta de passo.
+São filtros fáceis de programar, principalmente quando utilizada a convolução normal. No entanto, pode tornar-se bastante lento. Este problema é resolvido aplicando-se em conjunto técnicas de FFT entre outros algoritmos, de acordo com a necessidade da aplicação.
+
+A figura \ref{fig08} mostra a resposta em frequência de um filtro passa-baixas ideal, onde todas as frequências acima da frequência de corte são bloqueadas. Fazendo sua transformada inversa de Fourier, obtemos o núcleo do filtro ideal, mostrado na figura \ref{fig09}. Essa curva, no domínio do tempo, representa uma função já conhecida, a função sinc, definida como $sin(x)/x$. Para sistemas discretos, esta função é definida como:
+
+\[h[i]=\frac{\sin(2\pi.f_c.i)}{i.\pi}\]
+
+Fazendo a convolução desta função com o sinal de entrada, obtemos a saída de um filtro passa-baixas perfeito. No entanto, como pôde ser visto na figura \ref{fig09}, esta função extende-se ao infinito alternando entre valores positivos e negativos em torno do eixo das abscissas. Matematicamente, nenhum problema. Entretanto, torna-se impossível implementarmos esta função em computadores, uma vez que não dispomos de vetores de dados com comprimento infinito.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.6]{fig08.jpg}
+	\caption{Filtro passa-baixas ideal no domínio da frequência}
+	\label{fig08}
+	\end{center}
+\end{figure}
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.6]{fig09.jpg}
+	\caption{Núcleo do filtro no domínio do tempo}
+	\label{fig09}
+	\end{center}
+\end{figure}
+
+Este problema pode ser contornado se efetuarmos algumas modificações no núcleo do filtro. A primeira, é truncarmos a função para um comprimento finito de pontos, de tamanho $M+1$. Tal escolha é realizada para que haja um ponto simétrico na função. Ainda, deslocamos toda a função para a direita de modo que não haja amostra de índice negativo, facilitando o trabalho computacional, conforme pode ser visto na figura \ref{fig10}. O resultado desta operação de deslocamento é impactante, uma vez que apenas desloca a saída do sinal.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.6]{fig10.jpg}
+	\caption{Núcleo do filtro truncado e deslocado}
+	\label{fig10}
+	\end{center}
+\end{figure}
+
+O resultado do truncamento, entretanto, é bastante impactante. Realizando a transformada de Fourier deste sinal truncado, percebe-se o Efeito de Gibbs, estudado em Equações Diferenciais e que são distorções na função devido à descontinuidades abruptas. Esta descontinuidade é refletida em alto overshoot, bem como flutuações a níveis bastante indesejados para filtros. Para solucionar este problema, é então utilizada a técnica de janelamento: consiste em multiplicarmos o núcleo do filtro por uma função pré-definida, uma janela, que suavizará as descontinuidades e reduzirá os efeitos negativos na saída do filtro, conforme pode ser visto na figura \ref{fig11}.
+
+\begin{figure}
+	\begin{center}
+	\includegraphics[scale=0.6]{fig11.jpg}
+	\caption{Janelas de Blackman e Hamming e respectivas respostas em frequência}
+	\label{fig11}
+	\end{center}
+\end{figure}
+
+Existem vários tipos de janelas desenvolvidas para o projeto de filtros, cujo nome geralmente é em homenagem ao pesquisador que a desenvolveu. Entretanto, diferem em poucos aspectos uma das outras e, para este estudo, citaremos apenas duas delas: a janela de Blackman e a de Hamming.
+
+A janela de Blackman é dada pela equação abaixo e possui uma atenuação maior da banda de rejeição, embora uma transição mais larga, sendo preferencialmente escolhida:
+
+\[w[i]=0.42-0.5\cos(\frac{2\pi.i}{M})+0.08\cos(\frac{4\pi.i}{M})\]
+
+Já a janela de Hamming é dada pela seguinte equação:
+
+\[w[i]=0.54-0.46\cos(\frac{2\pi.i}{M})\]
+
+\subsection{Projetando o filtro}
+Para projetar um filtro FIR de janelamento, alguns parâmetros devem ser inicialmente definidos, tal como a frequência de corte, $f_c$, e o comprimento do núcleo do filtro, $M$. Este comprimento nada mais é que o número de amostras que comporão o núcleo e que serão convoluídos com o sinal de entrada. É também chamado de ordem do filtro digital e, consequentemente, quanto maior a ordem, maior o tempo de processamento. Daí a importância da escolha adequada destes parâmetros, já que após um certo tamanho de M, aumentá-lo não garante eficiência maior do filtro e sim, apenas capacidade de processamento disperdiçada.
+
+A frequência de corte $f_c$ é sempre representada como uma fração da taxa de amostragem e, devido ao critério de Nyquist, deve estar sempre entre $0$ e $0.5$. O valor de $M$ define o decaimento do filtro na faixa de transição e geralmente obedece a seguinte relação:
+
+\[M\sim\frac{4}{BW}\]
+
+Na relação acima, $BW$ representa o comprimento da banda de transição, isto é, a largura de banda entre a faixa de rejeição e a faixa de passagem. Após a escolha destes parâmetros, o núcleo do filtro pode ser calculado através da seguinte relação, que consiste na multiplicação da função $sinc$ com a janela escolhida (no caso, a janela de Blackman):
+
+\[h[i]=K\frac{\sin(2\pi.f_c.i)}{i.\pi}[0.42-0.5\cos(\frac{2\pi.i}{M})+0.08\cos(\frac{4\pi.i}{M})]\]
+
+A constante $K$ da equação é escolhida de modo que o ganho seja unitário para frequências nulas. Na prática, esta constante é ignorada durante o cálculo e todas as amostras são normalizadas, isto é, a soma de todas as amostras deve resultar o valor inteiro $1$. 
+
+\chapter{Projeto de um filtro de áudio utilizando PSoC}
+\section{Definição de parâmetros}
+Neste capítulo, procederemos a montagem efetiva do filtro de áudio com base em todos os conceitos e técnicas até então estudados. O filtro escolhido para ser implementado será um filtro passa-baixas, do tipo FIR por janelamento, visando a aplicação dos conceitos explorados anteriormente e a sua facilidade de implementação.
+
+Como trabalharemos com sinais de áudio, nos interessa processar apenas aqueles audíveis pelo ser humano, isto é, entre $40Hz$ e $10kHz$. A definição da faixa de sinal a ser trabalhada é necessária para a parametrização do conversor AD. Teremos, assim, sinais de entrada de $0Hz$ a $10kHz$. Para garantia do teorema de Nyquist, devemos amostrar no mínimo o dobro da banda de interesse, isto é, $20kHz$. Para este projeto foi escolhido uma frequência de amostragem de $30kHz$, propiciando $30.000$ amostras por segundo, isto é, uma taxa de amostragem de $33.33\mu s$
+
+Assim, temos a seguinte disposição de todos os parâmetros:
+\begin{itemize}
+\item Sinais de interesse: de $0Hz$ a $10kHz$;
+\item Frequência de amostragem: $30kHz$;
+\item Taxa de amostragem: $33.33\mu s$;
+\item Frequência de corte: $f_c=2kHz$;
+\item Banda de transição: $BW=500Hz$;
+
+\item Tipo de filtro: FIR - Janelamento;
+\item Ordem do filtro:
+\subitem Considerando $BW$ em função da frequência de amostragem, temos $BW=0.02f_s$ e, portanto, $BW=0.02\%$. Da relação estudada anteriormente, $M=240$. 
+\subitem Escolhe-se, portanto, um filtro de ordem $M=250$.
+\end{itemize}
+
+
+\section{Código do filtro}
+Abaixo, segue o código implementado para o filtro em questão. Além das linhas de códigos, os parâmetros da seção anterior devem ser configurados nas propriedades globais e do ADC do PSoC.
+
+\begin{verbatim}
+//----------------------------------------------------------------------------
+// C main line
+//----------------------------------------------------------------------------
+
+#include <m8c.h>        // part specific constants and macros
+#include "PSoCAPI.h"    // PSoC API definitions for all User Modules
+
+int x[4999];		//Vetor com o sinal de entrada
+int y[4999];		//Vetor com o sinal de saída
+float h[250];			//Vetor com o núcleo do filtro
+int soma;
+
+float const pi=3.14159265;	//Valor de Pi
+float const fc=0.06;		//Valor relativo da freq. de corte
+int const M=250;			//Ordem do filtro (M+1 amostras)
+
+void main()
+{
+   M8C_EnableGInt;                       // Habilita interrupções globais   
+   ADCINC_Start(ADCINC_HIGHPOWER);       // Apply power to the SC Block   
+   ADCINC_GetSamples(0);                 // Have ADC run continuously   
+   for(;;){   
+      while(ADCINC_fIsDataAvailable() == 0);   // Loop until value ready   
+      ADCINC_iClearFlagGetData();              // Clear ADC flag and get data   
+      for (i=0; i<M; i++){
+	  	if (i-M/2)=0 
+			then
+				h[i]=2*pi*fc;
+			else 
+				h[i]=sin(2*pi*fc*(i-M/2))/(i-M/2);
+		h[i]=h[i]*(0.42-0.5*cos(2*pi*i/M)+0.08*cos(4*pi*i/M);
+		}
+	  soma=0;					//Rotina para normalização das amostras
+	  for (i=0; i<M; i++){
+	  	soma=soma+h[i];
+		}
+	  for (i=0; i<M; i++){
+	  	h[i]=h[i]/soma;
+		}
+								//Rotina para convolução e geração da saída.
+	  for (j=250; j<4999; j++){
+	  	y[j]=0;
+		for (i=0; i<M; i++){
+			y[j]=y[j]+x[j-i]*h[i];
+			}
+		}
+   }   
+}
+\end{verbatim}
+
+\chapter{Conclusão}
+Após concluir este estudo, foi possível alcançar os objetivos propostos. Entre eles, compreender o funcionamento do microcontrolador PSoC da Cypress apresentando o tema de uma maneira didática para posterior utilização em outros trabalhos. Além disso, verificou-se também a compreensão do processamento digital de sinais, tanto em relação à teoria matemática envolvida quanto à aplicação de algumas técnicas de processamento.
+
+Verifica-se que o assunto é bastante amplo e possui uma infinidade de aplicação. Assim, como sugestão de trabalhos futuros, está a utilização dos módulos de filtros analógicos existentes no PSoC, de modo a realizar um estudo comparativo entre o desempenho dos filtros. Além da comparação entre filtros digitais e analógicos, é possível estudar e implementar outras algoritmos de filtros digitais, tais como outras equações de janelamento ou então filtros IIR. Ainda, para implementar a velocidade de processamento, é desejável o estudo da transformada rápida de Fourier.
+
+\addtocontents{toc}{\protect \vspace{1ex}} \addcontentsline{toc}{section}{Referências}
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+\bibitem[1]{Wikipedia - PSoC} http://en.wikipedia.org/wiki/PSoC acessada em 2009-05-29 as 17:11.
+\bibitem[2]{Wikipedia - SoC} http://en.wikipedia.org/wiki/System-on-a-chip acessada em 2009-05-29 as 16:30.
+\bibitem[3]{EngFranco} FRANCO, Ricardo. {\it Curso de PSoC}. 2008.
+\bibitem[4]{Wikipedia - Harvard} http://en.wikipedia.org/wiki/Harvard\_Mark\_I acessada em 2009-07-11 as 22:31.
+\bibitem[5]{DSPGuide} SMITH, Steven W.. {\it The Scientist and Engineer's Guide to Digital Signal Processing}. Newnes, 2002.
+\bibitem[6]{Haykin} HAYKIN, Simon \& VAN VEEN, Barry. {\it Sinais e sistemas}. Bookman, 2007.
+\bibitem[7]{Winder} WINDER, Steven. {\it Analog and Digital Filter Design}. Newnes, 2nd Edition.
+\bibitem[8]{ManualC} COCIAN, Luis Fernando Espinosa. {\it Manual da linguagem C}. Editora da Ulbra, 2004.
+\bibitem[9]{Manual} {\it PSoC Technical Reference Manual}. Cypress, 2005.
+\end{thebibliography}
+
+\end{document}
